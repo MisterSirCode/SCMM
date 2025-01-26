@@ -1,3 +1,3 @@
-name = Sir Code's Mod Menu
-author = Mister SirCode
-description = A collection of toggleable modifications and cheats that are compatible with basically any mod. Please report any issues by contacting me on the Official Teardown Discord, my username is "dominusnak"!
+name = The Assist Menu
+author = SirCode
+description = A collection of toggleable modifications and cheats to assist with gameplay or development
