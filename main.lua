@@ -6,6 +6,9 @@ local playerTarget
 local maxDist = 1000
 local hasframed = 0
 local frameWidth, frameHeight
+local currentMenuOpacity = 0
+local needsToClose = false
+local menuOpen = false
 
 function clickFlame()
 	local cam = GetCameraTransform()
@@ -68,21 +71,19 @@ function init()
 	end
 	-- Unlock All Items Hack End
 
-	SetBool(tempid..'menu-open', false)
+	menuOpen = false
 	tp = false
 	mx = 0
 	my = 0
-	ingameMenuAlpha = 0
 	aaFlightRate = 0.166667
 	aaFlightCurrentX = 0
 	aaFlightCurrentY = 0
 	aaFlightCurrentZ = 0
-	closeMenu = false
 	-- SetInt(modid..'flightSpeed', 10)
 end
 
 function tick(dt)
-	if GetBool(tempid..'menu-open') then
+	if menuOpen then
 		SetBool('game.disablepause', true)
 		SetBool('game.disablemap', true)
 	end
@@ -108,8 +109,10 @@ function tick(dt)
 	-- TODO: CHANGE TO SETPARAM GODMODE
 
 	if GetBool(modid..'inf-health', true) then
+		SetPlayerParam("GodMode", true)
 		if GetPlayerHealth() then
-			SetPlayerHealth(1)
+			SetPlayerRegenerationState(true)
+			SetPlayerHealth(1) -- Backup, incase a mod directly damages the player
 		end
 	end
 	-- Infinite Health End
@@ -419,30 +422,48 @@ end
 -- Externalized so that it can be framed more easily.
 function drawInternalMenuItems()
 	UiPush()
+		UiColor(1, 1, 1, currentMenuOpacity)
 		UiTranslate(24, 24)
 		UiFont('bold.ttf', 24)
 		UiText('The Assist Menu')
 		UiTranslate(0, 24)
 		UiFont('bold.ttf', 16)
 		UiText('Version '..version)
+		UiTranslate(0, 48)
+		BoolButton('Godmode', 'inf-health')
 	UiPop()
 end
 
 function draw()
-	if GetBool(tempid..'menu-open') then
+	DebugWatch("Closing", needsToClose)
+	DebugWatch("Opacity", currentMenuOpacity)
+	if menuOpen then
 		UiModalBegin() -- Disable other inputs
 		UiMakeInteractive() -- Put focus on UI window
 	end
 
 	-- Toggle UI On and Off
 	if InputPressed(GetString(modid..'menu-ingame.key')) then
-		SetBool(tempid..'menu-open', not GetBool(tempid..'menu-open'))
+		menuOpen = not menuOpen
+		if menuOpen == false then
+			needsToClose = true
+		end
 	end
 
 	-- Draw Menu
-	if GetBool(tempid..'menu-open') then
+	if menuOpen or needsToClose then
 		if InputPressed('esc') then
-			SetBool(tempid..'menu-open', false)
+			menuOpen = false
+			needsToClose = true
+		end
+
+		if needsToClose then
+			SetValue("currentMenuOpacity", 0, "cosine", 0.1)
+			if currentMenuOpacity == 0 then
+				needsToClose = false
+			end
+		else
+			SetValue("currentMenuOpacity", 1, "cosine", 0.1)
 		end
 
 		-- Begin UI Layer
@@ -457,7 +478,7 @@ function draw()
 			height = frameHeight + margins
 			UiTranslate(UiCenter() - width / 2, UiMiddle() - height / 2)
 			-- Draw foreground baseplate
-			UiBlur(1)
+			UiBlur(currentMenuOpacity)
 			UiImageBox(darkbox, width, height, 6, 6)
 		end
 		-- Draw internal elements
