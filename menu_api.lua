@@ -7,6 +7,10 @@ off_sound = 'MOD/assets/sounds/pause-off.ogg'
 on_sound = 'MOD/assets/sounds/pause-on.ogg'
 lightbox = 'MOD/assets/images/box-light.png'
 darkbox = 'MOD/assets/images/box-dark.png'
+button_opacity = 0
+button_width = 300
+modder_width = 50
+button_height = 40
 
 function validateDefaultKeys()
     for m=1, #modules do
@@ -78,23 +82,6 @@ function clamp(n, mi, ma)
 	return n
 end
 
-function BoolButton(text, bool)
-	UiButtonImageBox(lightbox, 6, 6)
-	if GetBool(modid..bool) then
-		UiColor(0.3, 1, 0.1)
-		if UiTextButton(text..' - Yes', 300, 40) then
-			SetBool(modid..bool, false)
-			UiSound(off_sound)
-		end
-	else
-		UiColor(1, 0.3, 0.1)
-		if UiTextButton(text..' - No', 300, 40) then
-			SetBool(modid..bool, true)
-			UiSound(on_sound)
-		end
-	end
-end
-
 function ShiftInt(int, min, max, iter)
     if iter > 0 and GetInt(int) == max then
         SetInt(int, min)
@@ -126,25 +113,64 @@ function ShiftFloat(float, min, max, iter)
 end
 
 function IntButton(text, int, min, max, iter)
-	UiButtonImageBox(lightbox, 6, 6)
-    UiColor(1, 1, 1)
-    UiTextButton(text..': '..GetInt(modid..int), 180, 40)
+	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
+    UiTextButton(text..': '..GetInt(modid..int), button_width - (2 * modder_width) - 20, button_height)
     UiPush()
-        UiColor(1, 0.3, 0.1)
+        UiColor(1, 0.3, 0.1, button_opacity)
         UiAlign('right top')
         UiTranslate(-100, 0)
-        if UiTextButton('<', 50, 40) then
+        if UiTextButton('<', 50, button_height) then
             ShiftInt(modid..int, min, max, -iter)
             UiSound(off_sound)
         end
     UiPop()
     UiPush()
-        UiColor(0.3, 1, 0.1)
+        UiColor(0.3, 1, 0.1, button_opacity)
         UiAlign('left top')
         UiTranslate(100, 0)
-        if UiTextButton('>', 50, 40) then
+        if UiTextButton('>', 50, button_height) then
             ShiftInt(modid..int, min, max, iter)
             UiSound(on_sound)
         end
     UiPop()
+end
+
+function FloatButton(text, float, min, max, iter)
+	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
+    UiTextButton(text..': '..(math.round(GetFloat(modid..float) * 1000) / 1000), button_width - (2 * modder_width) - 20, button_height)
+    UiPush()
+        UiColor(1, 0.3, 0.1, button_opacity)
+        UiAlign('right top')
+        UiTranslate(-100, 0)
+        if UiTextButton('<', modder_width, button_height) then
+            ShiftFloat(modid..float, min, max, -iter)
+            UiSound(off_sound)
+        end
+    UiPop()
+    UiPush()
+        UiColor(0.3, 1, 0.1, button_opacity)
+        UiAlign('left top')
+        UiTranslate(100, 0)
+        if UiTextButton('>', modder_width, button_height) then
+            ShiftFloat(modid..float, min, max, iter)
+            UiSound(on_sound)
+        end
+    UiPop()
+end
+
+function BoolButton(text, bool)
+	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
+	if GetBool(modid..bool) then
+        UiColor(0.3, 1, 0.1, button_opacity)
+		if UiTextButton(text..' - On', button_width, button_height) then
+			SetBool(modid..bool, false)
+			UiSound(off_sound)
+		end
+	else
+		UiColor(1, 0.3, 0.1, button_opacity)
+		if UiTextButton(text..' - Off', button_width, button_height) then
+			SetBool(modid..bool, true)
+			UiSound(on_sound)
+		end
+	end
 end

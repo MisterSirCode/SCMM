@@ -6,9 +6,10 @@ local playerTarget
 local maxDist = 1000
 local hasframed = 0
 local frameWidth, frameHeight
-local currentMenuOpacity = 0
+currentMenuOpacity = 0
 local needsToClose = false
 local menuOpen = false
+local button_gap = 10
 
 function clickFlame()
 	local cam = GetCameraTransform()
@@ -91,7 +92,8 @@ function tick(dt)
 	-- Infinite Mission Time
 	if GetBool(modid..'inf-timer') then
 		if GetBool('level.alarm') then
-			SetFloat('level.alarmtimer', 60)		
+			SetFloat('level.alarmtimer', 60)
+			SetBool('level.alarm', false)
 		end
 	end
 	-- Infinite Mission Time End
@@ -421,8 +423,9 @@ end
 
 -- Externalized so that it can be framed more easily.
 function drawInternalMenuItems()
+	local vspace = button_gap + button_height
+	local hspace = button_gap + button_width
 	UiPush()
-		UiColor(1, 1, 1, currentMenuOpacity)
 		UiTranslate(24, 24)
 		UiFont('bold.ttf', 24)
 		UiText('The Assist Menu')
@@ -431,12 +434,17 @@ function drawInternalMenuItems()
 		UiText('Version '..version)
 		UiTranslate(0, 48)
 		BoolButton('Godmode', 'inf-health')
+		UiTranslate(0, vspace)
+		BoolButton('Infinite Ammo', 'inf-ammo')
+		UiTranslate(0, vspace)
+		BoolButton('Disable Alarm', 'inf-timer')
 	UiPop()
 end
 
 function draw()
-	DebugWatch("Closing", needsToClose)
-	DebugWatch("Opacity", currentMenuOpacity)
+	button_opacity = currentMenuOpacity
+
+	-- Control setter
 	if menuOpen then
 		UiModalBegin() -- Disable other inputs
 		UiMakeInteractive() -- Put focus on UI window
@@ -445,25 +453,39 @@ function draw()
 	-- Toggle UI On and Off
 	if InputPressed(GetString(modid..'menu-ingame.key')) then
 		menuOpen = not menuOpen
-		if menuOpen == false then
-			needsToClose = true
+		if menuOpen then
+            UiSound(on_sound)
+		else
+            UiSound(off_sound)
 		end
+	end
+
+	-- Transitioner
+	if menuOpen then
+		if currentMenuOpacity < 1 then
+			SetValue("currentMenuOpacity", 1, "linear", 0.1)
+		end
+	else
+		if currentMenuOpacity > 0.01 then
+			needsToClose = true
+			SetValue("currentMenuOpacity", 0, "linear", 0.1)
+		end
+	end
+
+	-- Extra closer
+	if currentMenuOpacity <= 0.01 then
+		needsToClose = false
 	end
 
 	-- Draw Menu
 	if menuOpen or needsToClose then
 		if InputPressed('esc') then
 			menuOpen = false
-			needsToClose = true
-		end
-
-		if needsToClose then
-			SetValue("currentMenuOpacity", 0, "cosine", 0.1)
-			if currentMenuOpacity == 0 then
-				needsToClose = false
+			if menuOpen then
+				UiSound(on_sound)
+			else
+				UiSound(off_sound)
 			end
-		else
-			SetValue("currentMenuOpacity", 1, "cosine", 0.1)
 		end
 
 		-- Begin UI Layer
@@ -479,6 +501,7 @@ function draw()
 			UiTranslate(UiCenter() - width / 2, UiMiddle() - height / 2)
 			-- Draw foreground baseplate
 			UiBlur(currentMenuOpacity)
+			UiColor(1, 1, 1, currentMenuOpacity)
 			UiImageBox(darkbox, width, height, 6, 6)
 		end
 		-- Draw internal elements
