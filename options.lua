@@ -1,77 +1,116 @@
 #include "menu_api.lua"
 
-function init()
-	DebugPrint('Initializing');
-	validateDefaultKeys()
-	-- if GetBool(modid..'startedUsingMenu') == false then
-	-- 	SetBool(modid..'ingame-menu', true)
-	-- 	SetFloat(modid..'player-boost-velocity', 0.3)
-	-- 	SetFloat(modid..'vehicle-boost-velocity', 0.3)
-	-- 	SetFloat(modid..'free-cam-velocity', 1.0)
-	-- 	SetFloat(modid..'click-explode-power', 2)
-	-- 	SetFloat(modid..'click-destroy-power', 5)
-	-- 	SetFloat(modid..'blast-away-radius', 10)
-	-- 	SetFloat(modid..'clear-debris-radius', 10)
-	-- 	SetFloat(modid..'ray-cutter-radius', 0.2)
-	-- 	SetBool(modid..'startedUsingMenu', true)
-	-- end
+local uidelay = 0.1
+local hasframed = 0
+local frameWidth, frameHeight
+currentDebugOpacity = 0
+currentDebugMessage = ''
+local button_gap = 10
 
-	-- SetBool(tempid..'setting-ingame-menu.key', false)
-	-- SetBool(tempid..'setting-free-cam.key', false)
-	-- SetBool(tempid..'setting-blast-away.key', false)
-	-- SetBool(tempid..'setting-vehicle-boost.key', false)
-	-- SetBool(tempid..'setting-player-boost.key', false)
-	-- SetBool(tempid..'setting-click-fire.key', false)
-	-- SetBool(tempid..'setting-click-explode.key', false)
-	-- SetBool(tempid..'setting-click-delete.key', false)
-	-- SetBool(tempid..'setting-click-destroy.key', false)
-	-- SetBool(tempid..'setting-ray-cutter.key', false)
-	-- SetBool(tempid..'setting-clear-debris.key', false)
-	-- SetBool(tempid..'setting-flight.key', false)
+function init()
+	validateDefaultKeys()
+	disable_tools = true
+end
+
+function drawInternalMenuItems()
+	local vspace = button_gap + button_height
+	local hspace = button_gap + button_width
+	UiPush()
+		UiTranslate(24, 24)
+		UiFont('bold.ttf', 24)
+		UiPush()
+			UiFont('regular.ttf', 18)
+			UiTextShadow(0, 0, 0, 0.5 * debug_opacity, 1.0, 0.5)
+			UiAlign('right top')
+			UiTranslate(hspace + button_width, 0)
+			if debug_state == 'warn' then
+				UiColor(1, 0.7, 0.1, debug_opacity)
+			else
+				UiColor(1, 1, 1, debug_opacity)
+			end
+			UiText(debug_message)
+		UiPop()
+		UiText("SirCode's Mod Menu")
+		UiTranslate(0, 24)
+		UiFont('bold.ttf', 16)
+		UiText('Version '..version)
+		UiTranslate(0, 48)
+		UiPush()
+			BoolButton('Godmode', 'inf-health')
+			UiTranslate(0, vspace)
+			BoolButton('Infinite Ammo', 'inf-ammo')
+			UiTranslate(0, vspace)
+			BoolButton('Disable Alarm', 'inf-timer')
+			UiTranslate(0, vspace)
+			BoolButton('Unlock Tools', 'unlock-tools')
+			UiTranslate(0, vspace + 20)
+			KeyButton('Movement Boost', 'player-boost')
+			UiTranslate(0, vspace)
+			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1)
+		UiPop()
+		UiPush()
+			UiTranslate(hspace, 0)
+			ToolButton('Click Flame', 'click-fire')
+			UiTranslate(0, vspace)
+			ToolButton('Click Explode', 'click-explode')
+			UiTranslate(0, vspace)
+			ToolButton('Click Delete', 'click-delete')
+			UiTranslate(0, vspace)
+			KeyButton('Flight', 'flight')
+			UiTranslate(0, vspace + 20)
+			KeyButton('Driving Boost', 'vehicle-boost')
+			UiTranslate(0, vspace)
+			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1)
+		UiPop()
+	UiPop()
 end
 
 function draw()
+	-- Keybind Setting
+	if setting_bind then
+		checkKeyAtFrame()
+	end
+
+	-- Defaults
+	debug_opacity = debug_opacity - 0.01
+	button_opacity = 1.0
+
+	-- Begin UI Layer
 	UiPush()
-		UiTranslate(0, 0)
 		UiAlign('left top')
-		UiFont('regular.ttf', 26)
-		UiText('The Text Button Contains Info About A Module')
-		UiTranslate(0, 50)
-		UiText('The + Button Contains Settings For A Module. Not All Have Settings')
-		UiTranslate(0, 50)
-		UiText('The On / Off Button Toggles The Module')
-		UiTranslate(0, 50)
-		UiFont('bold.ttf', 26)
-		UiText('Turning off "Ingame Menu" will NOT disable other cheats!')
-	UiPop()
-	UiPush()
-		UiTranslate(UiCenter(), 50)
-		UiAlign('center middle')
-		UiFont('bold.ttf', 48)
-		UiColor(1, 1, 1)
-		UiText('The Assist Menu')
-		UiFont('regular.ttf', 26)
-		UiTranslate(240, 6)
-		UiColor(1, 0.8, 0.5)
-		UiText('v'..version)
-		UiTranslate(-240, 50)
-		UiColor(1, 1, 1)
-		UiText('Contact SirCode on the Teardown Discord for help')
-		UiTranslate(0, 50)
-		UiText('This mod runs stable on 1.6+, you are on '..GetString('game.version'))
-		UiTranslate(0, 75)
-	UiPop()
-	UiPush()
-		UiTranslate(UiCenter(), UiHeight() - 80)
-		UiAlign('center middle')
-		UiFont('regular.ttf', 26)
-		UiButtonImageBox('ui/common/box-outline-6.png', 6, 6)
-		UiColor(1, 1, 1)
-		if UiTextButton('Close', 200, 40) then
-			Menu()
-			SetBool(tempid..'descOpen', false)
-			UiSound('Sounds/BlipHigher.wav')
+		UiTextShadow(0, 0, 0, 0.5, 1.0, 0.5)
+		-- Set width and height of menu ingame
+		local margins = 24
+		local width = UiWidth() / 2
+		local height = UiHeight() / 2
+		if hasframed == 1 then
+			width = frameWidth + margins
+			height = frameHeight + margins
+			UiTranslate(UiCenter() - width / 2, UiMiddle() - height / 2)
+			-- Draw foreground baseplate
+			UiImageBox(darkbox, width, height, 6, 6)
+		end
+		-- Draw internal elements
+		if hasframed == 0 then
+			UiWindow(0, 0, true)
+			UiBeginFrame()
+				drawInternalMenuItems()
+			frameWidth, frameHeight = UiEndFrame()
+			hasframed = 1
+		else
+			drawInternalMenuItems()
 		end
 	UiPop()
+	UiPush()
+		UiFont('regular.ttf', 18)
+		UiAlign('right top')
+		UiTranslate(UiWidth() - 50, 50)
+		UiText('Tips!')
+		UiTranslate(0, 24)
+		UiText('The blue "Tool" button selects the currently held tool for that mod')
+		UiTranslate(0, 24)
+		UiText('(Obviously that means theyre disabled in the options menu)')
+		UiTranslate(0, 24)
+		UiText('The yellow "Key" button will query a keybind to use for that mod')
+	UiPop()
 end
-

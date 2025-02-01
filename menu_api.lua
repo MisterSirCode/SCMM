@@ -1,7 +1,7 @@
 -- This will automatically append the mod's ID after savegame.mod
 version = 12
 modid = 'savegame.mod.'
-tempid = 'level.assist_menu.'
+tempid = 'level.sircodesmenu.'
 modules = {}
 off_sound = 'MOD/assets/sounds/pause-off.ogg'
 on_sound = 'MOD/assets/sounds/pause-on.ogg'
@@ -11,10 +11,21 @@ lightbox_m = 'MOD/assets/images/box-light-mid.png'
 lightbox_r = 'MOD/assets/images/box-light-right.png'
 darkbox = 'MOD/assets/images/box-dark.png'
 button_opacity = 0
-button_width = 300
+debug_opacity = 0
+debug_message = ''
+button_width = 250
 modder_width = 50
 button_height = 40
-button_gap = 20
+button_gap = 5
+setting_bind = false
+setting_display = ''
+disable_tools = false
+
+function updateDebugMessage(text, state)
+	debug_opacity = 2
+	debug_message = text
+    debug_state = state
+end
 
 function validateDefaultKeys()
     for m=1, #modules do
@@ -54,11 +65,11 @@ modules = {
     makeModule('inf-ammo', 'Infinite Ammo', false, ''),
     makeModule('inf-timer', 'Freeze Alarm', false, ''),
     makeModule('unlock-tools', 'Unlock Tools', false, ''),
-    makeModule('free-cam', 'Free-Camera', true, 'g'),
     makeModule('flight', 'Flight', true, 'f'),
-    makeModule('player-boost', 'Player Boost', true, ''),
-    makeModule('vehicle-boost', 'Vehicle Boost', true, ''),
-    makeModule('clear-debris', 'Clear Debris', true, ''),
+    makeModule('player-boost', 'Player Boost', true, 'q'),
+    makeModule('player-boost-velocity', 'Player Speed', true, 0.4),
+    makeModule('vehicle-boost', 'Vehicle Boost', true, 'q'),
+    makeModule('vehicle-boost-velocity', 'Vehicle Speed', true, 0.4),
     makeModule('click-fire', 'Click Fire', false, ''),
     makeModule('click-explode', 'Click Explode', false, ''),
     makeModule('click-delete', 'Click Delete', false, ''),
@@ -135,10 +146,11 @@ end
 function IncDecButton(text, type, value, min, max, iter)
     -- Draw the Decrease button
     UiPush()
+    UiPush()
         UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
         UiFont('bold.ttf', 24)
         UiColor(1, 0.3, 0.1, button_opacity)
-        if UiTextButton('-', 50, button_height) then
+        if UiTextButton('-', modder_width, button_height) then
             if type == 'int' then
                 ShiftInt(modid..value, min, max, -iter)
             else
@@ -148,8 +160,8 @@ function IncDecButton(text, type, value, min, max, iter)
         end
     UiPop()
     -- Draw the Middle box
-    local middle_width = button_width - (2 * modder_width) - button_gap
-    UiTranslate(10 + modder_width)
+    local middle_width = button_width - (2 * modder_width) - (2 * button_gap)
+    UiTranslate(button_gap + modder_width)
 	UiButtonImageBox(lightbox_m, 6, 6, 1, 1, 1, button_opacity)
     UiColor(1, 1, 1, button_opacity)
     local valText
@@ -158,14 +170,14 @@ function IncDecButton(text, type, value, min, max, iter)
     else
         valText = math.floor(GetFloat(modid..value) * 1000) / 1000
     end
-    UiTextButton(text..': '..valText, button_width - (2 * modder_width) - button_gap, button_height)
+    UiTextButton(text..': '..valText, middle_width, button_height)
     -- Draw the Increase button
-    UiTranslate(button_gap / 2 + middle_width)
+    UiTranslate(button_gap + middle_width)
     UiPush()
         UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
         UiFont('bold.ttf', 24)
         UiColor(0.3, 1, 0.1, button_opacity)
-        if UiTextButton('+', 50, button_height) then
+        if UiTextButton('+', modder_width, button_height) then
             if type == 'int' then
                 ShiftInt(modid..value, min, max, iter)
             else
@@ -173,6 +185,7 @@ function IncDecButton(text, type, value, min, max, iter)
             end
             UiSound(on_sound)
         end
+    UiPop()
     UiPop()
 end
 
@@ -184,19 +197,84 @@ function FloatButton(text, float, min, max, iter)
     IncDecButton(text, 'float', float, min, max, iter)
 end
 
-function ToolButton(text, bool, tool)
-	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
+-- Tool Setter Button
+function ToolButton(text, bool)
+    UiPush()
+    local left_width = button_width - button_gap - modder_width
+	UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
 	if GetBool(modid..bool) then
         UiColor(0.3, 1, 0.1, button_opacity)
-		if UiTextButton(text..' - On', button_width - button_gap - modder_width, button_height) then
+		if UiTextButton(text..' - On', left_width, button_height) then
 			SetBool(modid..bool, false)
 			UiSound(off_sound)
 		end
 	else
 		UiColor(1, 0.3, 0.1, button_opacity)
-		if UiTextButton(text..' - Off', button_width - button_gap - modder_width, button_height) then
+		if UiTextButton(text..' - Off', left_width, button_height) then
 			SetBool(modid..bool, true)
 			UiSound(on_sound)
 		end
 	end
+    UiTranslate(left_width + button_gap)
+	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
+    if disable_tools then
+        UiColor(0.4, 0.1, 0.0, 1.0)
+    else
+        UiColor(0.1, 0.5, 1.0, button_opacity)
+    end
+    if UiTextButton('Tool', modder_width, button_height) and not disable_tools then
+        SetString(modid..bool..'.tool', GetString('game.player.tool'))
+        updateDebugMessage(text..' tool updated to '..GetString('game.player.tool'), '')
+        UiSound(on_sound)
+    end
+    UiPop()
+end
+
+-- Keybind Setter
+function checkKeyAtFrame()
+	local key = InputLastPressedKey()
+	if string.len(key) > 0 then
+		if key == 'return' then
+			updateDebugMessage('Sorry! Return is a reserved keybind!', 'warn')
+		else
+			SetString(modid..setting_bind..'.key', key)
+			updateDebugMessage('Set keybind of '..setting_display..' to '..key, '')
+		end
+        setting_bind = false
+	end
+end
+
+-- Keybind Setter Button
+function KeyButton(text, bool)
+    UiPush()
+    local left_width = button_width - button_gap - modder_width
+	UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
+	if GetBool(modid..bool) then
+        UiColor(0.3, 1, 0.1, button_opacity)
+		if UiTextButton(text..' - On', left_width, button_height) then
+			SetBool(modid..bool, false)
+			UiSound(off_sound)
+		end
+	else
+		UiColor(1, 0.3, 0.1, button_opacity)
+		if UiTextButton(text..' - Off', left_width, button_height) then
+			SetBool(modid..bool, true)
+			UiSound(on_sound)
+		end
+	end
+    UiTranslate(left_width + button_gap)
+	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
+    UiColor(1, 1, 0.1, button_opacity)
+    if setting_bind == bool then
+        if UiTextButton('...', modder_width, button_height) then
+            UiSound(off_sound)
+        end
+    else
+        if UiTextButton('Key', modder_width, button_height) then
+            setting_bind = bool
+            setting_display = text
+            UiSound(on_sound)
+        end
+    end
+    UiPop()
 end

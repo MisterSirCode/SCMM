@@ -7,6 +7,8 @@ local maxDist = 1000
 local hasframed = 0
 local frameWidth, frameHeight
 currentMenuOpacity = 0
+currentDebugOpacity = 0
+currentDebugMessage = ''
 local needsToClose = false
 local menuOpen = false
 local button_gap = 10
@@ -44,18 +46,6 @@ end
 
 function init()
 	validateDefaultKeys()
-	-- if GetBool(modid..'startedUsingMenu') == false then
-	-- 	SetBool(modid..'ingame-menu', true)
-	-- 	SetFloat(modid..'player-boost-velocity', 0.3)
-	-- 	SetFloat(modid..'vehicle-boost-velocity', 0.3)
-	-- 	SetFloat(modid..'free-cam-velocity', 1.0)
-	-- 	SetFloat(modid..'click-explode-power', 2)
-	-- 	SetFloat(modid..'click-destroy-power', 5)
-	-- 	SetFloat(modid..'blast-away-radius', 10)
-	-- 	SetFloat(modid..'clear-debris-radius', 10)
-	-- 	SetFloat(modid..'ray-cutter-radius', 0.2)
-	-- 	SetBool(modid..'startedUsingMenu', true)
-	-- end
 
 	-- Unlock All Items Hack
 	if GetBool(modid..'unlock-tools') then
@@ -73,14 +63,6 @@ function init()
 	-- Unlock All Items Hack End
 
 	menuOpen = false
-	tp = false
-	mx = 0
-	my = 0
-	aaFlightRate = 0.166667
-	aaFlightCurrentX = 0
-	aaFlightCurrentY = 0
-	aaFlightCurrentZ = 0
-	-- SetInt(modid..'flightSpeed', 10)
 end
 
 function tick(dt)
@@ -96,7 +78,6 @@ function tick(dt)
 			SetBool('level.alarm', false)
 		end
 	end
-	-- Infinite Mission Time End
 
 	-- Infinite Ammo
 	if GetBool(modid..'inf-ammo') then
@@ -104,12 +85,8 @@ function tick(dt)
 		SetInt('game.tool.'..tool..'.ammo', 999)
 		SetString('game.tool.'..tool..'.ammo.display', '')
 	end
-	-- Infinite Ammo End
 
 	-- Infinite Health
-
-	-- TODO: CHANGE TO SETPARAM GODMODE
-
 	if GetBool(modid..'inf-health', true) then
 		SetPlayerParam("GodMode", true)
 		if GetPlayerHealth() then
@@ -117,7 +94,6 @@ function tick(dt)
 			SetPlayerHealth(1) -- Backup, incase a mod directly damages the player
 		end
 	end
-	-- Infinite Health End
 
 	-- Player Boost
 	if GetBool(modid..'player-boost') then
@@ -134,7 +110,6 @@ function tick(dt)
 					d = TransformToParentVec(t, Vec(0, -velocity, 0))
 					vel = VecAdd(vel, d)
 				end
-			elseif InputDown(GetString(modid..'player-boost1')) then
 				if InputDown('w') then
 					d = TransformToParentVec(t, Vec(0, 0, -velocity))
 					vel = VecAdd(vel, d)
@@ -152,7 +127,6 @@ function tick(dt)
 			SetPlayerVelocity(vel)
 		end
 	end
-	-- Player Boost End
 
 	-- Vehicle Boost Hack
 	if GetBool(modid..'vehicle-boost') then
@@ -171,7 +145,6 @@ function tick(dt)
 					d = TransformToParentVec(t, Vec(0, -velocity, 0))
 					vel = VecAdd(vel, d)
 				end
-			elseif InputDown(GetString(modid..'vehicle-boost1')) then
 				if InputDown('up') then
 					d = TransformToParentVec(t, Vec(0, 0, -velocity))
 					vel = VecAdd(vel, d)
@@ -183,7 +156,6 @@ function tick(dt)
 			SetBodyVelocity(b, vel)
 		end
 	end
-	-- Vehicle Boost Hack End
 
 	-- Blow Away Debris Hack
 	if GetBool(modid..'blast-away') then
@@ -220,56 +192,40 @@ function tick(dt)
 			end
 		end
 	end
-	-- Blow Away Debris Hack End
 
 	-- Click Fire Hack
 	if GetBool(modid..'click-fire') then
-		local toolId = toolIds[GetInt(modid..'click-fire-tool')]
-		if GetString('game.player.tool') == toolId or GetString('game.player.tool') == 'aahandflame' then
-			if GetBool('game.player.canusetool') and tp == false and InputDown('lmb') then
-				for i=1, 50 do
+		if GetString('game.player.tool') == GetString(modid..'click-fire.tool') then
+			if GetBool('game.player.canusetool') and InputDown('lmb') then
+				for i=1, 20 do
 					clickFlame()
 				end
 			end
 		end
 	end
-	-- Click Fire Hack End
 
 	-- Click Explode Hack
 	if GetBool(modid..'click-explode') then
-		local toolId = toolIds[GetInt(modid..'click-explode-tool')]
-		if GetBool(modid..'explPaint') then
-			if GetString('game.player.tool') == toolId then
-				if GetBool('game.player.canusetool') and tp == false and InputDown('lmb') then
-					clickExplode()
-				end
-			end
-		else
-			if GetString('game.player.tool') == toolId then
-				if GetBool('game.player.canusetool') and tp == false and InputPressed('lmb') then
-					clickExplode()
-				end
+		if GetString('game.player.tool') == GetString(modid..'click-explode.tool') then
+			if GetBool('game.player.canusetool') and InputPressed('lmb') then
+				clickExplode()
 			end
 		end
 	end
-	-- Click Explode Hack Ewd
 
 	-- Click Destroy Hack
-	if GetBool(modid..'click-destroy') then
-		local toolId = toolIds[GetInt(modid..'click-destroy-tool')]
-		if GetString('game.player.tool') == toolId or GetString('game.player.tool') == 'aahanddestroy' then
-			if GetBool('game.player.canusetool') and tp == false and InputPressed('lmb') then
-				clickDestroy()
-			end
-		end
-	end
-	-- Click Destroy Hack End
+	-- if GetBool(modid..'click-destroy') then
+	-- 	if GetString('game.player.tool') == GetString(modid..'click-destroy.tool') then
+	-- 		if GetBool('game.player.canusetool') and InputPressed('lmb') then
+	-- 			clickDestroy()
+	-- 		end
+	-- 	end
+	-- end
 
 	-- Click Delete Hack
 	if GetBool(modid..'click-delete') then
-		local toolId = toolIds[GetInt(modid..'click-delete-tool')]
-		if GetString('game.player.tool') == toolId or GetString('game.player.tool') == 'aahanddelete' then
-			if GetBool('game.player.canusetool') and tp == false then
+		if GetString('game.player.tool') == GetString(modid..'click-delete.tool') then
+			if GetBool('game.player.canusetool') then
 				local t = GetCameraTransform()
 				local fwd = TransformToParentVec(t, Vec(0, 0, -1))
 				local maxDist = 2000
@@ -283,142 +239,33 @@ function tick(dt)
 			end
 		end
 	end
-	-- Click Delete Hack End
 
 	-- Debug Info
-	if GetBool(modid..'debug-info') then
-		local t = GetCameraTransform()
-		local pt = GetPlayerTransform()
-		local dir = TransformToParentVec(t, {0, 0, -1})
-		local hit, dist, normal, shape = QueryRaycast(t.pos, dir, 100)
-		DebugWatch('Player Position', round(pt.pos[1], 1)..', '..round(pt.pos[2], 1)..', '..round(pt.pos[3], 1))
-		DebugWatch('Hit', hit)
-		if hit then
-			local hitPoint = VecAdd(t.pos, VecScale(dir, dist))
-			DebugLine(VecAdd(t.pos, {0, -1, 0}), hitPoint, 0, 1, 0)
-			DebugCross(hitPoint)
-			DrawShapeOutline(shape, 1)
-			DebugWatch('Point Position', round(hitPoint[1], 1)..', '..round(hitPoint[2], 1)..', '..round(hitPoint[3], 1))
-			DebugWatch('Shape Handle', shape)
-		end
-		DebugWatch('Current Tool ID', GetString('game.player.tool'))
-	end
-	-- Debug Info End
+	-- if GetBool(modid..'debug-info') then
+	-- 	local t = GetCameraTransform()
+	-- 	local pt = GetPlayerTransform()
+	-- 	local dir = TransformToParentVec(t, {0, 0, -1})
+	-- 	local hit, dist, normal, shape = QueryRaycast(t.pos, dir, 100)
+	-- 	DebugWatch('Player Position', round(pt.pos[1], 1)..', '..round(pt.pos[2], 1)..', '..round(pt.pos[3], 1))
+	-- 	DebugWatch('Hit', hit)
+	-- 	if hit then
+	-- 		local hitPoint = VecAdd(t.pos, VecScale(dir, dist))
+	-- 		DebugLine(VecAdd(t.pos, {0, -1, 0}), hitPoint, 0, 1, 0)
+	-- 		DebugCross(hitPoint)
+	-- 		DrawShapeOutline(shape, 1)
+	-- 		DebugWatch('Point Position', round(hitPoint[1], 1)..', '..round(hitPoint[2], 1)..', '..round(hitPoint[3], 1))
+	-- 		DebugWatch('Shape Handle', shape)
+	-- 	end
+	-- 	DebugWatch('Current Tool ID', GetString('game.player.tool'))
+	-- end
 
-	-- Smooth Flight
 
-	-- TODO: CHANGE TO SETPARAM FLIGHT
-
-	if GetBool(modid..'flight') and tp == false then
+	-- Flight mod
+	if GetBool(modid..'flight') then
 		if InputPressed(GetString(modid..'flight.key')) then
-			SetBool(tempid..'isSmoothFlying', not GetBool(tempid..'isSmoothFlying'))
-		end
-		if GetBool(tempid..'isSmoothFlying') then
-			local t = GetPlayerTransform()
-			local v = GetPlayerVelocity()
-			local fs = GetInt(modid..'flightSpeed')
-			local aaXDir = 0
-			local aaYDir = 0
-			local aaZDir = 0
-			if InputDown('right') then aaXDir = aaXDir + 1 end
-			if InputDown('left') then aaXDir = aaXDir - 1 end
-			if InputDown('space') then aaYDir = aaYDir + 1 end
-			if InputDown('shift') then aaYDir = aaYDir - 1 end
-			if InputDown('down') then aaZDir = aaZDir + 1 end
-			if InputDown('up') then aaZDir = aaZDir - 1 end
-			SetPlayerVelocity(TransformToParentVec(t, Vec(0 + (fs * aaXDir), aaFlightRate + (fs * aaYDir), 0 + (fs * aaZDir))))
+			SetPlayerParam('FlyMode', not GetPlayerParam('FlyMode'))
 		end
 	end
-	-- Smooth Flight End
-
-	-- Free Camera
-	if GetBool(modid..'free-cam') and GetBool(tempid..'isSmoothFlying') == false then
-		ptn = GetCameraTransform()
-		if tp then
-			mx = mx - InputValue('mousedx') / 17.5
-			my = my - InputValue('mousedy') / 17.5
-			mouserot = QuatEuler(my, mx, 0)
-			if InputDown('w') then
-				ptn = Transform(VecAdd(ptn.pos, VecScale(VecNormalize(TransformToParentVec(ptn, Vec(0, 0, -GetFloat(modid..'free-cam-velocity')))), 0.2)), mouserot)
-				SetCameraTransform(ptn)
-			end
-			if InputDown('s') then
-				ptn = Transform(VecSub(ptn.pos, VecScale(VecNormalize(TransformToParentVec(ptn, Vec(0, 0, -GetFloat(modid..'free-cam-velocity')))), 0.2)), mouserot)
-				SetCameraTransform(ptn)
-			end
-			if not(InputDown('w') or InputDown('s')) or InputDown('a') or InputDown('d') then
-				ptn = Transform(GetCameraTransform().pos, mouserot)
-				SetCameraTransform(ptn)
-			end
-			if InputDown('a') then
-				ptn = Transform(VecAdd(ptn.pos, VecScale(VecNormalize(TransformToParentVec(ptn, Vec(-GetFloat(modid..'free-cam-velocity'), 0, 0))), 0.13)), mouserot)
-				SetCameraTransform(ptn)
-			end
-			if InputDown('d') then
-				ptn = Transform(VecSub(ptn.pos, VecScale(VecNormalize(TransformToParentVec(ptn, Vec(-GetFloat(modid..'free-cam-velocity'), 0, 0))), 0.13)), mouserot)
-				SetCameraTransform(ptn) 
-			end
-			if InputDown('space') then
-				ptn = Transform(VecAdd(ptn.pos, VecScale(VecNormalize(TransformToParentVec(ptn, Vec(0, GetFloat(modid..'free-cam-velocity'), 0))), 0.16)), mouserot)
-				SetCameraTransform(ptn)
-			end
-			if InputDown('shift') then
-				ptn = Transform(VecAdd(ptn.pos, VecScale(VecNormalize(TransformToParentVec(ptn, Vec(0, -GetFloat(modid..'free-cam-velocity'), 0))), 0.16)), mouserot)
-				SetCameraTransform(ptn)
-			end
-			SetPlayerTransform(GetPlayerTransform())
-		end
-		if InputPressed(GetString(modid..'free-cam.key')) then
-			if tp then
-				tp = false
-				SetPlayerTransform(Transform(VecSub((ptn.pos), Vec(0, 1.8, 0)), ptn.rot))
-			else
-				tp = true
-			end
-		end
-	end
-	-- Static Fly Hack End
-
-	-- Line Cutter
-	if GetBool(modid..'ray-cutter') then
-		if InputDown(GetString(modid..'ray-cutter.key')) then
-			local t = GetCameraTransform()
-			local dir = TransformToParentVec(t, {0, 0, -1})
-			local hit, dist, normal, shape = QueryRaycast(t.pos, dir, 1000)
-			local radius = GetFloat(modid..'ray-cutter-radius')
-			if hit then
-				local hitPoint = VecAdd(t.pos, VecScale(dir, dist))
-				MakeHole(hitPoint, radius, radius, radius)
-			end
-		end
-	end
-	-- Line Cutter End
-
-	-- Clear Debris
-	if GetBool(modid..'clear-debris') then
-		if InputDown(GetString(modid..'clear-debris.key')) then
-			local maxMass = 100000
-			local maxBlowDist = GetFloat(modid..'clear-debris-radius')
-			local t = GetCameraTransform()
-			local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
-			local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
-			local ma = VecAdd(c, Vec(maxBlowDist/2, maxBlowDist/2, maxBlowDist/2))
-			QueryRequire('physical dynamic')
-			local shapes = QueryAabbShapes(mi, ma)
-			for i=1,#shapes do
-				local s = shapes[i]
-				local bmi, bma = GetShapeBounds(s)
-				local bc = VecLerp(bmi, bma, 0.5)
-				local dir = VecSub(bc, t.pos)
-				local dist = VecLength(dir)
-				if dist < maxBlowDist then
-					DrawShapeOutline(shape, 1)
-					Delete(s)
-				end
-			end
-		end
-	end
-	-- Clear Debris End
 end
 
 -- Externalized so that it can be framed more easily.
@@ -428,27 +275,69 @@ function drawInternalMenuItems()
 	UiPush()
 		UiTranslate(24, 24)
 		UiFont('bold.ttf', 24)
-		UiText('The Assist Menu')
+		UiPush()
+			UiFont('regular.ttf', 18)
+			UiTextShadow(0, 0, 0, 0.5 * math.min(currentMenuOpacity, debug_opacity), 1.0, 0.5)
+			UiAlign('right top')
+			UiTranslate(hspace + button_width, 0)
+			if debug_state == 'warn' then
+				UiColor(1, 0.7, 0.1, math.min(currentMenuOpacity, debug_opacity))
+			else
+				UiColor(1, 1, 1, math.min(currentMenuOpacity, debug_opacity))
+			end
+			UiText(debug_message)
+		UiPop()
+		UiText("SirCode's Mod Menu")
 		UiTranslate(0, 24)
 		UiFont('bold.ttf', 16)
 		UiText('Version '..version)
 		UiTranslate(0, 48)
-		BoolButton('Godmode', 'inf-health')
-		UiTranslate(0, vspace)
-		BoolButton('Infinite Ammo', 'inf-ammo')
-		UiTranslate(0, vspace)
-		BoolButton('Disable Alarm', 'inf-timer')
-		UiTranslate(0, vspace)
-		BoolButton('Unlock Tools', 'unlock-tools')
+		UiPush()
+			BoolButton('Godmode', 'inf-health')
+			UiTranslate(0, vspace)
+			BoolButton('Infinite Ammo', 'inf-ammo')
+			UiTranslate(0, vspace)
+			BoolButton('Disable Alarm', 'inf-timer')
+			UiTranslate(0, vspace)
+			BoolButton('Unlock Tools', 'unlock-tools')
+			UiTranslate(0, vspace + 20)
+			KeyButton('Movement Boost', 'player-boost')
+			UiTranslate(0, vspace)
+			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1)
+		UiPop()
+		UiPush()
+			UiTranslate(hspace, 0)
+			ToolButton('Click Flame', 'click-fire')
+			UiTranslate(0, vspace)
+			ToolButton('Click Explode', 'click-explode')
+			UiTranslate(0, vspace)
+			ToolButton('Click Delete', 'click-delete')
+			UiTranslate(0, vspace)
+			KeyButton('Flight', 'flight')
+			UiTranslate(0, vspace + 20)
+			KeyButton('Driving Boost', 'vehicle-boost')
+			UiTranslate(0, vspace)
+			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1)
+		UiPop()
 	UiPop()
 end
 
+-- UI
 function draw()
+	-- Keybind Setting
+	if setting_bind then
+		checkKeyAtFrame()
+	end
+
+	-- Defaults
+	debug_opacity = debug_opacity - 0.01
 	button_opacity = currentMenuOpacity
 
 	-- Control setter
 	if menuOpen then
-		UiModalBegin() -- Disable other inputs
+		if not setting_bind then 
+			UiModalBegin() -- Disable other inputs
+		end
 		UiMakeInteractive() -- Put focus on UI window
 	end
 
@@ -493,6 +382,7 @@ function draw()
 		-- Begin UI Layer
 		UiPush()
 		UiAlign('left top')
+		UiTextShadow(0, 0, 0, 0.5 * currentMenuOpacity, 1.0, 0.5)
 		-- Set width and height of menu ingame
 		local margins = 24
 		local width = UiWidth() / 2
@@ -505,6 +395,14 @@ function draw()
 			UiBlur(currentMenuOpacity)
 			UiColor(1, 1, 1, currentMenuOpacity)
 			UiImageBox(darkbox, width, height, 6, 6)
+			if not UiIsMouseInRect(width, height) and (InputPressed('lmb') or InputPressed('rmb')) then
+				menuOpen = false
+				if menuOpen then
+					UiSound(on_sound)
+				else
+					UiSound(off_sound)
+				end
+			end
 		end
 		-- Draw internal elements
 		if hasframed == 0 then
