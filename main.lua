@@ -438,6 +438,8 @@ function drawInternalMenuItems()
 		BoolButton('Infinite Ammo', 'inf-ammo')
 		UiTranslate(0, vspace)
 		BoolButton('Disable Alarm', 'inf-timer')
+		UiTranslate(0, vspace)
+		BoolButton('Unlock Tools', 'unlock-tools')
 	UiPop()
 end
 
