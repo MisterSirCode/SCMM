@@ -102,7 +102,7 @@ function tick(dt)
 	if GetBool(modid..'inf-ammo') then
 		tool = GetString('game.player.tool')
 		SetInt('game.tool.'..tool..'.ammo', 999)
-		SetString('game.tool.tool.ammo.display', '')
+		SetString('game.tool.'..tool..'.ammo.display', '')
 	end
 	-- Infinite Ammo End
 
