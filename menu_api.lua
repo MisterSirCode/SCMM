@@ -30,10 +30,14 @@ end
 function validateDefaultKeys()
     for m=1, #modules do
         local mod = modules[m]
-        if mod.key then
+        if mod.key == true then
             local keypath = modid..mod.id..'.key';
             if GetString(keypath) == '' then
                 SetString(keypath, mod.def)
+            end
+        elseif mod.key == 'float' then
+            if not GetFloat(modid..mod.id) then
+                SetFloat(modid..mod.id, mod.def)
             end
         end
     end
@@ -61,15 +65,16 @@ end
 
 -- Set Defaults
 modules = {
+    makeModule('menu-ingame', 'Ingame Menu', true, 'return'),
     makeModule('inf-health', 'Godmode', false, ''),
     makeModule('inf-ammo', 'Infinite Ammo', false, ''),
     makeModule('inf-timer', 'Freeze Alarm', false, ''),
     makeModule('unlock-tools', 'Unlock Tools', false, ''),
     makeModule('flight', 'Flight', true, 'f'),
     makeModule('player-boost', 'Player Boost', true, 'q'),
-    makeModule('player-boost-velocity', 'Player Speed', true, 0.4),
+    makeModule('player-boost-velocity', 'Player Speed', 'float', 0.4),
     makeModule('vehicle-boost', 'Vehicle Boost', true, 'q'),
-    makeModule('vehicle-boost-velocity', 'Vehicle Speed', true, 0.4),
+    makeModule('vehicle-boost-velocity', 'Vehicle Speed', 'float', 0.4),
     makeModule('click-fire', 'Click Fire', false, ''),
     makeModule('click-explode', 'Click Explode', false, ''),
     makeModule('click-delete', 'Click Delete', false, ''),
@@ -83,6 +88,10 @@ end
 
 function aorb(a, b, d)
 	return (a and d or 0) - (b and d or 0)
+end
+
+function srnd(n)
+	return math.floor(n * 10 + 0.5) / 10
 end
 
 function round(n, dp)
@@ -134,7 +143,9 @@ function ShiftFloat(float, min, max, iter)
     elseif iter < 0 and GetFloat(float) == min then
         SetFloat(float, max)
     else
-        SetFloat(float, GetFloat(float) + iter)
+        SetFloat(float, srnd(GetFloat(float) + iter))
+        DebugWatch('after', GetFloat(float))
+        DebugWatch('rounded', srnd(GetFloat(float)))
     end
     if GetFloat(float) < min then
         SetFloat(float, max)
@@ -168,7 +179,7 @@ function IncDecButton(text, type, value, min, max, iter)
     if type == 'int' then
         valText = GetInt(modid..value)
     else
-        valText = math.floor(GetFloat(modid..value) * 1000) / 1000
+        valText = srnd(GetFloat(modid..value))
     end
     UiTextButton(text..': '..valText, middle_width, button_height)
     -- Draw the Increase button

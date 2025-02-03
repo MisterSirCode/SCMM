@@ -60,7 +60,6 @@ function init()
 			end
 		end
 	end
-	-- Unlock All Items Hack End
 
 	menuOpen = false
 end
@@ -300,7 +299,7 @@ function drawInternalMenuItems()
 			BoolButton('Disable Alarm', 'inf-timer')
 			UiTranslate(0, vspace)
 			BoolButton('Unlock Tools', 'unlock-tools')
-			UiTranslate(0, vspace + 20)
+			UiTranslate(0, vspace + button_gap)
 			KeyButton('Movement Boost', 'player-boost')
 			UiTranslate(0, vspace)
 			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1)
@@ -314,7 +313,7 @@ function drawInternalMenuItems()
 			ToolButton('Click Delete', 'click-delete')
 			UiTranslate(0, vspace)
 			KeyButton('Flight', 'flight')
-			UiTranslate(0, vspace + 20)
+			UiTranslate(0, vspace + button_gap)
 			KeyButton('Driving Boost', 'vehicle-boost')
 			UiTranslate(0, vspace)
 			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1)
