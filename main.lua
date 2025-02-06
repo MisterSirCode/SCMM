@@ -13,6 +13,11 @@ local needsToClose = false
 local menuOpen = false
 local button_gap = 10
 
+local godmode_needs_off = false
+local flight_needs_off = false
+local grav_needs_off = false
+local starting_grav = Vec(0, -10, 0)
+
 function clickFlame()
 	local cam = GetCameraTransform()
 	local dir = TransformToParentVec(cam, Vec(0,0,-1))
@@ -29,7 +34,7 @@ function clickExplode()
 	local hit, dist = QueryRaycast(cam.pos, dir, maxDist)
 	if hit then
 		local hitPos = VecAdd(cam.pos, VecScale(dir, dist))
-		Explosion(hitPos, GetFloat(modid..'click-explode-power'))
+		Explosion(hitPos, GetFloat(modid..'explosion-power'))
 	end
 end
 
@@ -45,7 +50,7 @@ function clickDestroy()
 end
 
 function init()
-	validateDefaultKeys()
+	validateDefaultOptions()
 
 	-- Unlock All Items Hack
 	if GetBool(modid..'unlock-tools') then
@@ -62,6 +67,7 @@ function init()
 	end
 
 	menuOpen = false
+	starting_grav = GetGravity()
 end
 
 function tick(dt)
@@ -87,10 +93,16 @@ function tick(dt)
 
 	-- Infinite Health
 	if GetBool(modid..'inf-health', true) then
-		SetPlayerParam("GodMode", true)
+		SetPlayerParam('GodMode', true)
 		if GetPlayerHealth() then
 			SetPlayerRegenerationState(true)
 			SetPlayerHealth(1) -- Backup, incase a mod directly damages the player
+		end
+		godmode_needs_off = false
+	else
+		if godmode_needs_off == false then
+			godmode_needs_off = true
+			SetPlayerParam('GodMode', false)
 		end
 	end
 
@@ -157,40 +169,40 @@ function tick(dt)
 	end
 
 	-- Blow Away Debris Hack
-	if GetBool(modid..'blast-away') then
-		if GetPlayerVehicle() == 0 then
-			local strength = 20
-			local maxMass = 100000
-			local maxBlowDist = GetFloat(modid..'blast-away-radius')
-			if InputDown(GetString(modid..'blast-away.key')) and GetBool('game.player.canusetool') then
-				local t = GetCameraTransform()
-				local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
-				local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
-				local ma = VecAdd(c, Vec(maxBlowDist/2, maxBlowDist/2, maxBlowDist/2))
-				QueryRequire('physical dynamic')
-				local bodies = QueryAabbBodies(mi, ma)
-				for i=1,#bodies do
-					local b = bodies[i]
-					local bmi, bma = GetBodyBounds(b)
-					local bc = VecLerp(bmi, bma, 0.5)
-					local dir = VecSub(bc, t.pos)
-					local dist = VecLength(dir)
-					dir = VecScale(dir, 1.0/dist)
-					local mass = GetBodyMass(b)
-					if dist < maxBlowDist and mass < maxMass then
-						dir[2] = 0.5
-						dir = VecNormalize(dir)
-						local massScale = 1 - math.min(mass/maxMass, 1.0)
-						local distScale = 1 - math.min(dist/maxBlowDist, 1.0)
-						local add = VecScale(dir, strength * massScale * distScale)
-						local vel = GetBodyVelocity(b)
-						vel = VecAdd(vel, add)
-						SetBodyVelocity(b, vel)
-					end
-				end
-			end
-		end
-	end
+	-- if GetBool(modid..'blast-away') then
+	-- 	if GetPlayerVehicle() == 0 then
+	-- 		local strength = 20
+	-- 		local maxMass = 100000
+	-- 		local maxBlowDist = GetFloat(modid..'blast-away-radius')
+	-- 		if InputDown(GetString(modid..'blast-away.key')) and GetBool('game.player.canusetool') then
+	-- 			local t = GetCameraTransform()
+	-- 			local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
+	-- 			local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
+	-- 			local ma = VecAdd(c, Vec(maxBlowDist/2, maxBlowDist/2, maxBlowDist/2))
+	-- 			QueryRequire('physical dynamic')
+	-- 			local bodies = QueryAabbBodies(mi, ma)
+	-- 			for i=1,#bodies do
+	-- 				local b = bodies[i]
+	-- 				local bmi, bma = GetBodyBounds(b)
+	-- 				local bc = VecLerp(bmi, bma, 0.5)
+	-- 				local dir = VecSub(bc, t.pos)
+	-- 				local dist = VecLength(dir)
+	-- 				dir = VecScale(dir, 1.0/dist)
+	-- 				local mass = GetBodyMass(b)
+	-- 				if dist < maxBlowDist and mass < maxMass then
+	-- 					dir[2] = 0.5
+	-- 					dir = VecNormalize(dir)
+	-- 					local massScale = 1 - math.min(mass/maxMass, 1.0)
+	-- 					local distScale = 1 - math.min(dist/maxBlowDist, 1.0)
+	-- 					local add = VecScale(dir, strength * massScale * distScale)
+	-- 					local vel = GetBodyVelocity(b)
+	-- 					vel = VecAdd(vel, add)
+	-- 					SetBodyVelocity(b, vel)
+	-- 				end
+	-- 			end
+	-- 		end
+	-- 	end
+	-- end
 
 	-- Click Fire Hack
 	if GetBool(modid..'click-fire') then
@@ -258,17 +270,35 @@ function tick(dt)
 	-- 	DebugWatch('Current Tool ID', GetString('game.player.tool'))
 	-- end
 
-
 	-- Flight mod
 	if GetBool(modid..'flight') then
 		if InputPressed(GetString(modid..'flight.key')) then
 			SetPlayerParam('FlyMode', not GetPlayerParam('FlyMode'))
+		end
+		flight_needs_off = false
+	else
+		if flight_needs_off == false then
+			flight_needs_off = true
+			SetPlayerParam('FlyMode', false)
+		end
+	end
+
+	-- Gravity mod
+	if GetBool(modid..'override-gravity') then
+		power = GetFloat(modid..'gravitation')
+		SetGravity(Vec(0, power, 0))
+		grav_needs_off = false
+	else
+		if grav_needs_off == false then
+			grav_needs_off = true
+			SetGravity(starting_grav)
 		end
 	end
 end
 
 -- Externalized so that it can be framed more easily.
 function drawInternalMenuItems()
+	DebugWatch('state', GetBool(modid..'ever_loaded'))
 	local vspace = button_gap + button_height
 	local hspace = button_gap + button_width
 	UiPush()
@@ -292,6 +322,13 @@ function drawInternalMenuItems()
 		UiText('Version '..version)
 		UiTranslate(0, 48)
 		UiPush()
+			-- Debug Use Only
+			UiTranslate(-0, -30)
+			if UiTextButton('Reset', 100, 100) then
+				SetBool(modid..'ever_loaded', false)
+			end
+			UiTranslate(0, 30)
+			-- Debug Use Only End
 			BoolButton('Godmode', 'inf-health')
 			UiTranslate(0, vspace)
 			BoolButton('Infinite Ammo', 'inf-ammo')
@@ -300,19 +337,27 @@ function drawInternalMenuItems()
 			UiTranslate(0, vspace)
 			BoolButton('Unlock Tools', 'unlock-tools')
 			UiTranslate(0, vspace + button_gap)
-			KeyButton('Movement Boost', 'player-boost')
+			BoolButton('Override Gravity', 'override-gravity')
+			UiTranslate(0, vspace)
+			FloatButton('Gravitation', 'gravitation', -30, 30, 1)
+			UiTranslate(0, vspace + button_gap)
+			KeyButton('Player Boost', 'player-boost')
 			UiTranslate(0, vspace)
 			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1)
 		UiPop()
 		UiPush()
 			UiTranslate(hspace, 0)
-			ToolButton('Click Flame', 'click-fire')
-			UiTranslate(0, vspace)
-			ToolButton('Click Explode', 'click-explode')
+			KeyButton('Flight', 'flight')
 			UiTranslate(0, vspace)
 			ToolButton('Click Delete', 'click-delete')
 			UiTranslate(0, vspace)
-			KeyButton('Flight', 'flight')
+			ToolButton('Click Flame', 'click-fire')
+			UiTranslate(0, vspace)
+			-- Extra Spot
+			UiTranslate(0, vspace + button_gap)
+			ToolButton('Click Explode', 'click-explode')
+			UiTranslate(0, vspace)
+			FloatButton('Explosiveness', 'explosion-power', 0.5, 4, 0.1)
 			UiTranslate(0, vspace + button_gap)
 			KeyButton('Driving Boost', 'vehicle-boost')
 			UiTranslate(0, vspace)

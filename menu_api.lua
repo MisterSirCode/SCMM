@@ -27,29 +27,23 @@ function updateDebugMessage(text, state)
     debug_state = state
 end
 
-function validateDefaultKeys()
-    for m=1, #modules do
-        local mod = modules[m]
-        if mod.key == true then
-            local keypath = modid..mod.id..'.key';
-            if GetString(keypath) == '' then
-                SetString(keypath, mod.def)
-            end
-        elseif mod.key == 'float' then
-            if not GetFloat(modid..mod.id) then
-                SetFloat(modid..mod.id, mod.def)
-            end
-        end
-    end
-end
-
 function validateDefaultOptions()
     if GetBool(modid..'ever_loaded') then
         -- TODO
     else
         SetBool(modid..'ever_loaded', true)
         -- Enable menu by default
-        SetBool(modid..modules[0].id, true)
+        SetBool(modid..modules[1].id, true)
+        -- Set menu values
+        for m=1, #modules do
+            local mod = modules[m]
+            if mod.key == true then
+                local keypath = modid..mod.id..'.key'
+                SetString(keypath, mod.def)
+            elseif mod.key == 'float' then
+                SetFloat(modid..mod.id, mod.def)
+            end
+        end
     end
 end
 
@@ -77,8 +71,11 @@ modules = {
     makeModule('vehicle-boost-velocity', 'Vehicle Speed', 'float', 0.4),
     makeModule('click-fire', 'Click Fire', false, ''),
     makeModule('click-explode', 'Click Explode', false, ''),
+    makeModule('explosion-power', 'Explosion Power', 'float', 0.5),
     makeModule('click-delete', 'Click Delete', false, ''),
-    makeModule('click-cutter', 'Click Cut', false, '')
+    makeModule('click-cutter', 'Click Cut', false, ''),
+    makeModule('override-gravity', 'Override Gravity', false, ''),
+    makeModule('gravitation', 'Gravitation', 'float', -10)
 }
 
 -- Is module enabled
@@ -144,8 +141,6 @@ function ShiftFloat(float, min, max, iter)
         SetFloat(float, max)
     else
         SetFloat(float, srnd(GetFloat(float) + iter))
-        DebugWatch('after', GetFloat(float))
-        DebugWatch('rounded', srnd(GetFloat(float)))
     end
     if GetFloat(float) < min then
         SetFloat(float, max)
