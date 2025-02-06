@@ -27,6 +27,10 @@ function updateDebugMessage(text, state)
     debug_state = state
 end
 
+function resetToDefault(module)
+    
+end
+
 function validateDefaultOptions()
     if GetBool(modid..'ever_loaded') then
         -- TODO
