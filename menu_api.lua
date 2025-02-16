@@ -77,7 +77,7 @@ modules = {
     makeModule('inf-ammo', 'Infinite Ammo', false, ''),
     makeModule('inf-timer', 'Freeze Alarm', false, ''),
     makeModule('unlock-tools', 'Unlock Tools', false, ''),
-    makeModule('flight', 'Flight', true, 'f'),
+    makeModule('flight', 'Flight', true, 'g'),
     makeModule('player-boost', 'Player Boost', true, 'q'),
     makeModule('player-boost-velocity', 'Player Speed', 'float', 0.4),
     makeModule('vehicle-boost', 'Vehicle Boost', true, 'q'),

@@ -1,3 +1,4 @@
 name = SirCode's Mod Menu
 author = SirCode
-description = A collection of toggleable modifications and cheats to assist with gameplay or development
+description = [noupload] A collection of toggleable modifications and cheats to assist with gameplay or development
+tags = tool

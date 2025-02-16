@@ -1,0 +1,34 @@
+After years of delays, I finally decided to update this mod for the newest teardown versions!
+The entire UI and most functionality of the menu has been built from the ground up.
+
+[h1]What is this?[/h1]
+A collection of toggleable modifications and cheats to assist with gameplay or development.
+There are cheats and utilities included. Some may be more useful then others, but I find the menu to be incredibly handy for my own use. I initially created it for myself years ago, but wanted to polish it up and make it available for others
+
+[h3]To open the menu ingame, click return / enter![/h3]
+
+[hr][/hr]
+
+[h1]What are the "Tool" mods?[/h1]
+These mods are simple utilities that activate upon using a tool.
+
+To set the tool you want to use, simply hold that tool in your hand, open the menu, and hit the "Tool" button next to the mod.
+
+[h1]How do I set keybinds?[/h1]
+Only a few mods require keys, but theyre easy to set.
+
+Simple click the "Key" button next to the mod, youll see it change to "...", which means its awaiting a key to set.
+
+Id recommend not using any teardown-defined or special keybinds. Return (enter) is the only keybind you cannot use, because it is used to open the menu ingame
+
+[h1]Other Tips:[/h1]
+For the increment / decrement buttons, you can click the white text in the middle to reset them to their defaults.
+
+Holding shift while incrementing or decrementing a value will double the amount it changes.
+Holding ctrl behaves similarly, but halves it instead of doubling it.
+
+[hr][/hr]
+
+Please comment any bugs or problems below, or suggest changes you think would be good to see.
+
+Contribute or explore the source code on Github: [url=https://github.com/MisterSirCode/Quilez-Laser]MisterSirCode / Quilez-Laser[/url]
