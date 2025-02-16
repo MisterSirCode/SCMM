@@ -36,6 +36,7 @@ function resetToDefault(modname)
             elseif mod.key == 'float' then
                 SetFloat(modid..mod.id, mod.def)
             end
+            updateDebugMessage(mod.name..' reset to default value', '')
         end
     end
 end
@@ -83,7 +84,7 @@ modules = {
     makeModule('vehicle-boost-velocity', 'Vehicle Speed', 'float', 0.4),
     makeModule('click-fire', 'Click Fire', false, ''),
     makeModule('click-explode', 'Click Explode', false, ''),
-    makeModule('explosion-power', 'Explosion Power', 'float', 0.5),
+    makeModule('explosion-power', 'Explosiveness', 'float', 0.5),
     makeModule('click-delete', 'Click Delete', false, ''),
     makeModule('click-cutter', 'Click Cut', false, ''),
     makeModule('override-gravity', 'Override Gravity', false, ''),
@@ -91,8 +92,17 @@ modules = {
 }
 
 -- Is module enabled
-function module(int)
+function moduleByInt(int)
     return GetBool(modid..modules[int])
+end
+
+function moduleById(id)
+    for m=1, #modules do
+        local mod = modules[m]
+        if mod.id == modname then
+            -- TODO
+        end
+    end
 end
 
 function aorb(a, b, d)
