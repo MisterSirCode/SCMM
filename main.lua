@@ -298,7 +298,7 @@ end
 
 -- Externalized so that it can be framed more easily.
 function drawInternalMenuItems()
-	DebugWatch('state', GetBool(modid..'ever_loaded'))
+	--DebugWatch('state', GetBool(modid..'ever_loaded'))
 	local vspace = button_gap + button_height
 	local hspace = button_gap + button_width
 	UiPush()
@@ -323,11 +323,11 @@ function drawInternalMenuItems()
 		UiTranslate(0, 48)
 		UiPush()
 			-- Debug Use Only
-			UiTranslate(-0, -30)
-			if UiTextButton('Reset', 100, 100) then
-				SetBool(modid..'ever_loaded', false)
-			end
-			UiTranslate(0, 30)
+			-- UiTranslate(-0, -30)
+			-- if UiTextButton('Reset', 100, 100) then
+			-- 	SetBool(modid..'ever_loaded', false)
+			-- end
+			-- UiTranslate(0, 30)
 			-- Debug Use Only End
 			BoolButton('Godmode', 'inf-health')
 			UiTranslate(0, vspace)

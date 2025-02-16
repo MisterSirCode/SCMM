@@ -27,8 +27,17 @@ function updateDebugMessage(text, state)
     debug_state = state
 end
 
-function resetToDefault(module)
-    
+function resetToDefault(modname)
+    for m=1, #modules do
+        local mod = modules[m]
+        if mod.id == modname then
+            if mod.key == true then
+                SetString(modid..mod.id..'.key', mod.def)
+            elseif mod.key == 'float' then
+                SetFloat(modid..mod.id, mod.def)
+            end
+        end
+    end
 end
 
 function validateDefaultOptions()
@@ -42,8 +51,7 @@ function validateDefaultOptions()
         for m=1, #modules do
             local mod = modules[m]
             if mod.key == true then
-                local keypath = modid..mod.id..'.key'
-                SetString(keypath, mod.def)
+                SetString(modid..mod.id..'.key', mod.def)
             elseif mod.key == 'float' then
                 SetFloat(modid..mod.id, mod.def)
             end
@@ -92,7 +100,7 @@ function aorb(a, b, d)
 end
 
 function srnd(n)
-	return math.floor(n * 10 + 0.5) / 10
+	return math.floor(n * 100 + 0.5) / 100
 end
 
 function round(n, dp)
@@ -132,9 +140,9 @@ function ShiftInt(int, min, max, iter)
         SetInt(int, GetInt(int) + iter)
     end
     if GetInt(int) < min then
-        SetInt(int, max)
-    elseif GetInt(int) > max then
         SetInt(int, min)
+    elseif GetInt(int) > max then
+        SetInt(int, max)
     end
 end
 
@@ -147,13 +155,19 @@ function ShiftFloat(float, min, max, iter)
         SetFloat(float, srnd(GetFloat(float) + iter))
     end
     if GetFloat(float) < min then
-        SetFloat(float, max)
-    elseif GetFloat(float) > max then
         SetFloat(float, min)
+    elseif GetFloat(float) > max then
+        SetFloat(float, max)
     end
 end
 
 function IncDecButton(text, type, value, min, max, iter)
+    if InputDown('shift') then
+        iter = iter * 2
+    end
+    if InputDown('ctrl') then
+        iter = iter / 2
+    end
     -- Draw the Decrease button
     UiPush()
     UiPush()
@@ -180,7 +194,9 @@ function IncDecButton(text, type, value, min, max, iter)
     else
         valText = srnd(GetFloat(modid..value))
     end
-    UiTextButton(text..': '..valText, middle_width, button_height)
+    if UiTextButton(text..': '..valText, middle_width, button_height) then
+        resetToDefault(value)
+    end
     -- Draw the Increase button
     UiTranslate(button_gap + middle_width)
     UiPush()
