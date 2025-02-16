@@ -1,0 +1,7 @@
+.vscode
+.git
+.gitattributes
+preview.pdn
+preview.png
+LICENSE
+README.md
