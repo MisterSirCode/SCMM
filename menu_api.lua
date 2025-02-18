@@ -1,5 +1,5 @@
 -- This will automatically append the mod's ID after savegame.mod
-version = 12
+version = 12.1
 modid = 'savegame.mod.'
 tempid = 'level.sircodesmenu.'
 modules = {}
@@ -79,8 +79,12 @@ modules = {
     makeModule('unlock-tools', 'Unlock Tools', false, ''),
     makeModule('flight', 'Flight', true, 'g'),
     makeModule('player-boost', 'Player Boost', true, 'q'),
+    makeModule('player-boost-hor', 'Horizontal Player Boost', true, 'r'),
+    makeModule('player-boost-ver', 'Vertical Player Boost', true, 'q'),
     makeModule('player-boost-velocity', 'Player Speed', 'float', 0.4),
     makeModule('vehicle-boost', 'Vehicle Boost', true, 'q'),
+    makeModule('vehicle-boost-hor', 'Horizontal Vehicle Boost', true, 'r'),
+    makeModule('vehicle-boost-ver', 'Vertical Vehicle Boost', true, 'q'),
     makeModule('vehicle-boost-velocity', 'Vehicle Speed', 'float', 0.4),
     makeModule('click-fire', 'Click Fire', false, ''),
     makeModule('click-explode', 'Click Explode', false, ''),
@@ -88,8 +92,13 @@ modules = {
     makeModule('click-delete', 'Click Delete', false, ''),
     makeModule('click-cutter', 'Click Cut', false, ''),
     makeModule('override-gravity', 'Override Gravity', false, ''),
-    makeModule('gravitation', 'Gravitation', 'float', -10)
+    makeModule('gravitation', 'Gravitation', 'float', -10),
+    makeModule('extraboostbinds', 'Extra Boost Binds', false, '')
 }
+
+function getkey(name)
+    return GetString(modid..name..'.key')
+end
 
 -- Is module enabled
 function moduleByInt(int)
@@ -131,12 +140,14 @@ function BoolButton(text, bool)
 		if UiTextButton(text..' - On', button_width, button_height) then
 			SetBool(modid..bool, false)
 			UiSound(off_sound)
+            return true
 		end
 	else
 		UiColor(1, 0.3, 0.1, button_opacity)
 		if UiTextButton(text..' - Off', button_width, button_height) then
 			SetBool(modid..bool, true)
 			UiSound(on_sound)
+            return true
 		end
 	end
 end
@@ -309,6 +320,38 @@ function KeyButton(text, bool)
         if UiTextButton('Key', modder_width, button_height) then
             setting_bind = bool
             setting_display = text
+            UiSound(on_sound)
+        end
+    end
+    UiPop()
+end
+
+function KeybindSelector(text1, bind1, text2, bind2)
+    UiPush()
+    local section_width = button_width / 2 - button_gap / 2
+    UiColor(1, 1, 0.1, button_opacity)
+	UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
+    if setting_bind == bind1 then
+        if UiTextButton('...', section_width, button_height) then
+            UiSound(off_sound)
+        end
+    else
+        if UiTextButton(text1..' Key', section_width, button_height) then
+            setting_bind = bind1
+            setting_display = text1
+            UiSound(on_sound)
+        end
+    end
+    UiTranslate(section_width + button_gap)
+	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
+    if setting_bind == bind2 then
+        if UiTextButton('...', section_width, button_height) then
+            UiSound(off_sound)
+        end
+    else
+        if UiTextButton(text2..' Key', section_width, button_height) then
+            setting_bind = bind2
+            setting_display = text2
             UiSound(on_sound)
         end
     end

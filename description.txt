@@ -1,3 +1,7 @@
+SirCode's Mod Menu
+
+[img]https://img.shields.io/steam/subscriptions/2416730982?color=061885[/img] [img]https://img.shields.io/steam/favorites/2416730982?color=AA1825[/img]
+
 After years of delays, I finally decided to update this mod for the newest teardown versions!
 The entire UI and most functionality of the menu has been built from the ground up.
 
@@ -17,7 +21,7 @@ To set the tool you want to use, simply hold that tool in your hand, open the me
 [h1]How do I set keybinds?[/h1]
 Only a few mods require keys, but theyre easy to set.
 
-Simple click the "Key" button next to the mod, youll see it change to "...", which means its awaiting a key to set.
+Simply click the "Key" button next to the mod, youll see it change to "...", which means its awaiting a key to set.
 
 Id recommend not using any teardown-defined or special keybinds. Return (enter) is the only keybind you cannot use, because it is used to open the menu ingame
 
@@ -26,6 +30,8 @@ For the increment / decrement buttons, you can click the white text in the middl
 
 Holding shift while incrementing or decrementing a value will double the amount it changes.
 Holding ctrl behaves similarly, but halves it instead of doubling it.
+
+Clicking the "Extra Boost Keybinds" button in the config page will allow you to bind separate horizontal and vertical keybinds for boost mods! Added due to popular demand from the old versions.
 
 [hr][/hr]
 

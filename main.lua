@@ -113,26 +113,31 @@ function tick(dt)
 			local d = TransformToParentVec(t, Vec(0, 0, 0))
 			local vel = GetPlayerVelocity()
 			local velocity = GetFloat(modid..'player-boost-velocity')
-			if InputDown(GetString(modid..'player-boost.key')) then
-				if InputDown('space') then
-					d = TransformToParentVec(t, Vec(0, velocity, 0))
-					vel = VecAdd(vel, d)
-				elseif InputDown('shift') then
-					d = TransformToParentVec(t, Vec(0, -velocity, 0))
-					vel = VecAdd(vel, d)
+			local usingDualBinds = GetBool(modid..'extraboostbinds')
+			if InputDown(getkey('player-boost')) or usingDualBinds then
+				if InputDown(getkey('player-boost-ver')) or not usingDualBinds then
+					if InputDown('space') then
+						d = TransformToParentVec(t, Vec(0, velocity, 0))
+						vel = VecAdd(vel, d)
+					elseif InputDown('shift') then
+						d = TransformToParentVec(t, Vec(0, -velocity, 0))
+						vel = VecAdd(vel, d)
+					end
 				end
-				if InputDown('w') then
-					d = TransformToParentVec(t, Vec(0, 0, -velocity))
-					vel = VecAdd(vel, d)
-				elseif InputDown('s') then
-					d = TransformToParentVec(t, Vec(0, 0, velocity))
-					vel = VecAdd(vel, d)
-				elseif InputDown('a') then
-					d = TransformToParentVec(t, Vec(-velocity, 0, 0))
-					vel = VecAdd(vel, d)
-				elseif InputDown('d') then
-					d = TransformToParentVec(t, Vec(velocity, 0, 0))
-					vel = VecAdd(vel, d)
+				if InputDown(getkey('player-boost-hor')) or not usingDualBinds then
+					if InputDown('up') then
+						d = TransformToParentVec(t, Vec(0, 0, -velocity))
+						vel = VecAdd(vel, d)
+					elseif InputDown('down') then
+						d = TransformToParentVec(t, Vec(0, 0, velocity))
+						vel = VecAdd(vel, d)
+					elseif InputDown('left') then
+						d = TransformToParentVec(t, Vec(-velocity, 0, 0))
+						vel = VecAdd(vel, d)
+					elseif InputDown('right') then
+						d = TransformToParentVec(t, Vec(velocity, 0, 0))
+						vel = VecAdd(vel, d)
+					end
 				end
 			end
 			SetPlayerVelocity(vel)
@@ -148,20 +153,25 @@ function tick(dt)
 			local b = GetVehicleBody(v)	
 			local vel = GetBodyVelocity(b)
 			local velocity = GetFloat(modid..'vehicle-boost-velocity')
-			if InputDown(GetString(modid..'vehicle-boost.key')) then
-				if InputDown('space') then
-					d = TransformToParentVec(t, Vec(0, velocity, 0))
-					vel = VecAdd(vel, d)
-				elseif InputDown('shift') then
-					d = TransformToParentVec(t, Vec(0, -velocity, 0))
-					vel = VecAdd(vel, d)
+			local usingDualBinds = GetBool(modid..'extraboostbinds')
+			if InputDown(getkey('vehicle-boost')) or usingDualBinds then
+				if InputDown(getkey('vehicle-boost-ver')) or not usingDualBinds then
+					if InputDown('space') then
+						d = TransformToParentVec(t, Vec(0, velocity, 0))
+						vel = VecAdd(vel, d)
+					elseif InputDown('shift') then
+						d = TransformToParentVec(t, Vec(0, -velocity, 0))
+						vel = VecAdd(vel, d)
+					end
 				end
-				if InputDown('up') then
-					d = TransformToParentVec(t, Vec(0, 0, -velocity))
-					vel = VecAdd(vel, d)
-				elseif InputDown('down') then
-					d = TransformToParentVec(t, Vec(0, 0, velocity))
-					vel = VecAdd(vel, d)
+				if InputDown(getkey('vehicle-boost-hor')) or not usingDualBinds then
+					if InputDown('up') then
+						d = TransformToParentVec(t, Vec(0, 0, -velocity))
+						vel = VecAdd(vel, d)
+					elseif InputDown('down') then
+						d = TransformToParentVec(t, Vec(0, 0, velocity))
+						vel = VecAdd(vel, d)
+					end
 				end
 			end
 			SetBodyVelocity(b, vel)
@@ -272,7 +282,7 @@ function tick(dt)
 
 	-- Flight mod
 	if GetBool(modid..'flight') then
-		if InputPressed(GetString(modid..'flight.key')) then
+		if InputPressed(getkey('flight')) then
 			SetPlayerParam('FlyMode', not GetPlayerParam('FlyMode'))
 		end
 		flight_needs_off = false
@@ -300,6 +310,7 @@ end
 function drawInternalMenuItems()
 	--DebugWatch('state', GetBool(modid..'ever_loaded'))
 	local vspace = button_gap + button_height
+	local tspace = button_gap / 2 + button_height
 	local hspace = button_gap + button_width
 	UiPush()
 		UiTranslate(24, 24)
@@ -338,11 +349,17 @@ function drawInternalMenuItems()
 			BoolButton('Unlock Tools', 'unlock-tools')
 			UiTranslate(0, vspace + button_gap)
 			BoolButton('Override Gravity', 'override-gravity')
-			UiTranslate(0, vspace)
+			UiTranslate(0, tspace)
 			FloatButton('Gravitation', 'gravitation', -30, 30, 1)
 			UiTranslate(0, vspace + button_gap)
-			KeyButton('Player Boost', 'player-boost')
-			UiTranslate(0, vspace)
+			if GetBool(modid..'extraboostbinds') then
+				BoolButton('Player Boost', 'player-boost')
+				UiTranslate(0, tspace)
+				KeybindSelector('Horizontal', 'player-boost-hor', 'Vertical', 'player-boost-ver')
+			else
+				KeyButton('Player Boost', 'player-boost')
+			end
+			UiTranslate(0, tspace)
 			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1)
 		UiPop()
 		UiPush()
@@ -356,11 +373,17 @@ function drawInternalMenuItems()
 			-- Extra Spot
 			UiTranslate(0, vspace + button_gap)
 			ToolButton('Click Explode', 'click-explode')
-			UiTranslate(0, vspace)
+			UiTranslate(0, tspace)
 			FloatButton('Explosiveness', 'explosion-power', 0.5, 4, 0.1)
 			UiTranslate(0, vspace + button_gap)
-			KeyButton('Driving Boost', 'vehicle-boost')
-			UiTranslate(0, vspace)
+			if GetBool(modid..'extraboostbinds') then
+				BoolButton('Vehicle Boost', 'vehicle-boost')
+				UiTranslate(0, tspace)
+				KeybindSelector('Horizontal', 'vehicle-boost-hor', 'Vertical', 'vehicle-boost-ver')
+			else
+				KeyButton('Vehicle Boost', 'vehicle-boost')
+			end
+			UiTranslate(0, tspace)
 			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1)
 		UiPop()
 	UiPop()
