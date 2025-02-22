@@ -78,6 +78,7 @@ modules = {
     makeModule('inf-timer', 'Freeze Alarm', false, ''),
     makeModule('unlock-tools', 'Unlock Tools', false, ''),
     makeModule('flight', 'Flight', true, 'g'),
+    makeModule('freecam', 'Freecam', true, 'h'),
     makeModule('player-boost', 'Player Boost', true, 'q'),
     makeModule('player-boost-hor', 'Horizontal Player Boost', true, 'r'),
     makeModule('player-boost-ver', 'Vertical Player Boost', true, 'q'),
@@ -93,7 +94,8 @@ modules = {
     makeModule('click-cutter', 'Click Cut', false, ''),
     makeModule('override-gravity', 'Override Gravity', false, ''),
     makeModule('gravitation', 'Gravitation', 'float', -10),
-    makeModule('extraboostbinds', 'Extra Boost Binds', false, '')
+    makeModule('extraboostbinds', 'Extra Boost Binds', false, ''),
+    makeModule('clear-fires', 'Clear Fires', true, 'o')
 }
 
 function getkey(name)
@@ -114,8 +116,24 @@ function moduleById(id)
     end
 end
 
+-- flight use
 function aorb(a, b, d)
 	return (a and d or 0) - (b and d or 0)
+end
+
+-- flight use
+function getDelta(dt, tr)
+    local f, b, l, r, s, c = InputDown('up'),
+                             InputDown('down'),
+                             InputDown('left'),
+                             InputDown('right'),
+                             InputDown('jump'),
+                             InputDown('shift')
+    if f or b or l or r or s or c then
+        local dist = InputDown('ctrl') and 0.3 or 0.1
+        local fup = aorb(s, c, dist)
+        return VecAdd(Vec(0, (f and 0 or fup) + dt / 10, 0), TransformToParentVec(tr, Vec(aorb(r, l, dist), (f and fup or 0), aorb(b, f, dist))))
+    end
 end
 
 function srnd(n)
@@ -322,6 +340,11 @@ function KeyButton(text, bool)
             setting_display = text
             UiSound(on_sound)
         end
+        if InputPressed('rmb') then
+            if UiIsMouseInRect(modder_width, button_height) then
+                updateDebugMessage(text..' is currently bound to '..GetString(modid..bool..'.key'), '')
+            end
+        end
     end
     UiPop()
 end
@@ -341,6 +364,11 @@ function KeybindSelector(text1, bind1, text2, bind2)
             setting_display = text1
             UiSound(on_sound)
         end
+        if InputPressed('rmb') then
+            if UiIsMouseInRect(section_width, button_height) then
+                updateDebugMessage(text1..' is currently bound to '..GetString(modid..bind1..'.key'), '')
+            end
+        end
     end
     UiTranslate(section_width + button_gap)
 	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
@@ -353,6 +381,11 @@ function KeybindSelector(text1, bind1, text2, bind2)
             setting_bind = bind2
             setting_display = text2
             UiSound(on_sound)
+        end
+        if InputPressed('rmb') then
+            if UiIsMouseInRect(section_width, button_height) then
+                updateDebugMessage(text2..' is currently bound to '..GetString(modid..bind2..'.key'), '')
+            end
         end
     end
     UiPop()

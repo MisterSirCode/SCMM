@@ -13,8 +13,9 @@ local needsToClose = false
 local menuOpen = false
 local button_gap = 10
 
+local flight = false
 local godmode_needs_off = false
-local flight_needs_off = false
+local freecam_needs_off = false
 local grav_needs_off = false
 local starting_grav = Vec(0, -10, 0)
 
@@ -92,7 +93,7 @@ function tick(dt)
 	end
 
 	-- Infinite Health
-	if GetBool(modid..'inf-health', true) then
+	if GetBool(modid..'inf-health') then
 		SetPlayerParam('GodMode', true)
 		if GetPlayerHealth() then
 			SetPlayerRegenerationState(true)
@@ -103,6 +104,13 @@ function tick(dt)
 		if godmode_needs_off == false then
 			godmode_needs_off = true
 			SetPlayerParam('GodMode', false)
+		end
+	end
+
+	-- Clear Fires
+	if GetBool(modid..'clear-fires') then
+		if InputPressed(getkey('clear-fires')) then	
+			RemoveAabbFires(Vec(-32768, -32768, -32768), Vec(32768, 32768, 32768))
 		end
 	end
 
@@ -280,15 +288,36 @@ function tick(dt)
 	-- 	DebugWatch('Current Tool ID', GetString('game.player.tool'))
 	-- end
 
-	-- Flight mod
-	if GetBool(modid..'flight') then
+	-- Flight Mod
+	if GetBool(modid..'flight') and not GetPlayerParam('FlyMode') then
 		if InputPressed(getkey('flight')) then
+			flight = not flight
+		end
+		if flight then
+			-- Courtesy of Thomasims.. Snippet barrowed from Precision Flight mod
+			local Target = nil
+            local pos = GetPlayerTransform().pos
+            local vel = GetPlayerVelocity()
+            if not Target or VecLength(vel) > 1 then
+                Target = pos
+            end
+            local del = getDelta(dt, GetCameraTransform())
+            if del then Target = VecAdd(Target, del) end
+            SetPlayerVelocity(VecScale(VecSub(Target, pos), 100))
+		end
+	else
+		flight = false
+	end
+
+	-- Freecam mod
+	if GetBool(modid..'freecam') and not flight then
+		if InputPressed(getkey('freecam')) then
 			SetPlayerParam('FlyMode', not GetPlayerParam('FlyMode'))
 		end
-		flight_needs_off = false
+		freecam_needs_off = false
 	else
-		if flight_needs_off == false then
-			flight_needs_off = true
+		if freecam_needs_off == false then
+			freecam_needs_off = true
 			SetPlayerParam('FlyMode', false)
 		end
 	end
@@ -364,13 +393,13 @@ function drawInternalMenuItems()
 		UiPop()
 		UiPush()
 			UiTranslate(hspace, 0)
+			KeyButton('Freecam', 'freecam')
+			UiTranslate(0, vspace)
 			KeyButton('Flight', 'flight')
 			UiTranslate(0, vspace)
 			ToolButton('Click Delete', 'click-delete')
 			UiTranslate(0, vspace)
 			ToolButton('Click Flame', 'click-fire')
-			UiTranslate(0, vspace)
-			-- Extra Spot
 			UiTranslate(0, vspace + button_gap)
 			ToolButton('Click Explode', 'click-explode')
 			UiTranslate(0, tspace)
