@@ -37,4 +37,4 @@ Clicking the "Extra Boost Keybinds" button in the config page will allow you to 
 
 Please comment any bugs or problems below, or suggest changes you think would be good to see.
 
-Contribute or explore the source code on Github: [url=https://github.com/MisterSirCode/Quilez-Laser]MisterSirCode / Quilez-Laser[/url]
+Contribute or explore the source code on Github: [url=https://github.com/MisterSirCode/SCMM]MisterSirCode / SCMM[/url]

@@ -12,12 +12,13 @@ currentDebugMessage = ''
 local needsToClose = false
 local menuOpen = false
 local button_gap = 10
-
 local flight = false
 local godmode_needs_off = false
 local freecam_needs_off = false
 local grav_needs_off = false
 local starting_grav = Vec(0, -10, 0)
+
+local useTimer = 0
 
 function clickFlame()
 	local cam = GetCameraTransform()
@@ -72,6 +73,10 @@ function init()
 end
 
 function tick(dt)
+	if useTimer < 10 then
+		useTimer = useTimer + (10 * dt)
+	end
+
 	if menuOpen then
 		SetBool('game.disablepause', true)
 		SetBool('game.disablemap', true)
@@ -187,45 +192,81 @@ function tick(dt)
 	end
 
 	-- Blow Away Debris Hack
-	-- if GetBool(modid..'blast-away') then
-	-- 	if GetPlayerVehicle() == 0 then
-	-- 		local strength = 20
-	-- 		local maxMass = 100000
-	-- 		local maxBlowDist = GetFloat(modid..'blast-away-radius')
-	-- 		if InputDown(GetString(modid..'blast-away.key')) and GetBool('game.player.canusetool') then
-	-- 			local t = GetCameraTransform()
-	-- 			local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
-	-- 			local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
-	-- 			local ma = VecAdd(c, Vec(maxBlowDist/2, maxBlowDist/2, maxBlowDist/2))
-	-- 			QueryRequire('physical dynamic')
-	-- 			local bodies = QueryAabbBodies(mi, ma)
-	-- 			for i=1,#bodies do
-	-- 				local b = bodies[i]
-	-- 				local bmi, bma = GetBodyBounds(b)
-	-- 				local bc = VecLerp(bmi, bma, 0.5)
-	-- 				local dir = VecSub(bc, t.pos)
-	-- 				local dist = VecLength(dir)
-	-- 				dir = VecScale(dir, 1.0/dist)
-	-- 				local mass = GetBodyMass(b)
-	-- 				if dist < maxBlowDist and mass < maxMass then
-	-- 					dir[2] = 0.5
-	-- 					dir = VecNormalize(dir)
-	-- 					local massScale = 1 - math.min(mass/maxMass, 1.0)
-	-- 					local distScale = 1 - math.min(dist/maxBlowDist, 1.0)
-	-- 					local add = VecScale(dir, strength * massScale * distScale)
-	-- 					local vel = GetBodyVelocity(b)
-	-- 					vel = VecAdd(vel, add)
-	-- 					SetBodyVelocity(b, vel)
-	-- 				end
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
+	if GetBool(modid..'blast-away') then
+		if GetPlayerVehicle() == 0 then
+			local strength = 20
+			local maxMass = 100000
+			local maxBlowDist = GetFloat(modid..'blast-radius')
+			if InputDown(GetString(modid..'blast-away.key')) and GetBool('game.player.canusetool') then
+				local debug = false
+				local t = GetCameraTransform()
+				local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
+				local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
+				local ma = VecAdd(c, Vec(maxBlowDist/2, maxBlowDist/2, maxBlowDist/2))
+				QueryRequire('physical dynamic')
+				local bodies = QueryAabbBodies(mi, ma)
+				for i=1,#bodies do
+					local b = bodies[i]
+					local bmi, bma = GetBodyBounds(b)
+					local bc = VecLerp(bmi, bma, 0.5)
+					local dir = VecSub(bc, t.pos)
+					local dist = VecLength(dir)
+					dir = VecScale(dir, 1.0/dist)
+					local mass = GetBodyMass(b)
+					if dist < maxBlowDist and mass < maxMass then
+						dir[2] = 0.5
+						dir = VecNormalize(dir)
+						local massScale = 1 - math.min(mass/maxMass, 1.0)
+						local distScale = 1 - math.min(dist/maxBlowDist, 1.0)
+						local add = VecScale(dir, strength * massScale * distScale)
+						local vel = GetBodyVelocity(b)
+						vel = VecAdd(vel, add)
+						local shapes = GetBodyShapes(b)
+						for i=1,#shapes do
+							DrawShapeOutline(shapes[i], 1, 0.1, 0.1, 0.5)
+						end
+						if debug then
+						else
+							SetBodyVelocity(b, vel)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	
+	-- Clear Debris
+	if GetBool("savegame.mod.scmm.clear-debris") then
+		if InputDown(GetString("savegame.mod.scmm.clear-debris0")) then
+			local maxMass = 100000
+			local maxBlowDist = GetFloat("savegame.mod.scmm.clear-debris-radius")
+			local t = GetCameraTransform()
+			local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
+			local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
+			local ma = VecAdd(c, Vec(maxBlowDist/2, maxBlowDist/2, maxBlowDist/2))
+			QueryRequire("physical dynamic")
+			local shapes = QueryAabbShapes(mi, ma)
+			for i=1,#shapes do
+				local s = shapes[i]
+				local bmi, bma = GetShapeBounds(s)
+				local bc = VecLerp(bmi, bma, 0.5)
+				local dir = VecSub(bc, t.pos)
+				local dist = VecLength(dir)
+				if dist < maxBlowDist then
+					DrawShapeOutline(shape, 1)
+					Delete(s)
+				end
+			end
+		end
+	end
+	-- Clear Debris End
+
 
 	-- Click Fire Hack
 	if GetBool(modid..'click-fire') then
 		if GetString('game.player.tool') == GetString(modid..'click-fire.tool') then
-			if GetBool('game.player.canusetool') and InputDown('lmb') then
+			if GetBool('game.player.canusetool') and InputDown('usetool') then
 				for i=1, 20 do
 					clickFlame()
 				end
@@ -236,20 +277,12 @@ function tick(dt)
 	-- Click Explode Hack
 	if GetBool(modid..'click-explode') then
 		if GetString('game.player.tool') == GetString(modid..'click-explode.tool') then
-			if GetBool('game.player.canusetool') and InputPressed('lmb') then
+			if GetBool('game.player.canusetool') and InputDown('usetool') and (useTimer > 2) then
+				useTimer = 0
 				clickExplode()
 			end
 		end
 	end
-
-	-- Click Destroy Hack
-	-- if GetBool(modid..'click-destroy') then
-	-- 	if GetString('game.player.tool') == GetString(modid..'click-destroy.tool') then
-	-- 		if GetBool('game.player.canusetool') and InputPressed('lmb') then
-	-- 			clickDestroy()
-	-- 		end
-	-- 	end
-	-- end
 
 	-- Click Delete Hack
 	if GetBool(modid..'click-delete') then
@@ -261,9 +294,26 @@ function tick(dt)
 				local hit, dist, normal, shape = QueryRaycast(t.pos, fwd, maxDist)
 				if hit then
 					DrawShapeOutline(shape, 1, 0.1, 0.1, 1)
-					if InputPressed('lmb') then
+					if InputPressed('usetool') then
 						Delete(shape)
 					end
+				end
+			end
+		end
+	end
+
+	-- Click Cut Hack
+	if GetBool(modid..'click-cutter') then
+		if GetString('game.player.tool') == GetString(modid..'click-cutter.tool') then
+			if GetBool('game.player.canusetool') and InputDown('usetool') and (useTimer > 2) then
+				useTimer = 0
+				local t = GetCameraTransform()
+				local dir = TransformToParentVec(t, {0, 0, -1})
+				local hit, dist, normal, shape = QueryRaycast(t.pos, dir, 1000)
+				local radius = GetFloat(modid..'cutting-range')
+				if hit then
+					local hitPoint = VecAdd(t.pos, VecScale(dir, dist))
+					MakeHole(hitPoint, radius, radius, radius)
 				end
 			end
 		end
@@ -348,7 +398,7 @@ function drawInternalMenuItems()
 			UiFont('regular.ttf', 18)
 			UiTextShadow(0, 0, 0, 0.5 * math.min(currentMenuOpacity, debug_opacity), 1.0, 0.5)
 			UiAlign('right top')
-			UiTranslate(hspace + button_width, 0)
+			UiTranslate(hspace * 2 + button_width, 0)
 			if debug_state == 'warn' then
 				UiColor(1, 0.7, 0.1, math.min(currentMenuOpacity, debug_opacity))
 			else
@@ -397,9 +447,9 @@ function drawInternalMenuItems()
 			UiTranslate(0, vspace)
 			KeyButton('Flight', 'flight')
 			UiTranslate(0, vspace)
-			ToolButton('Click Delete', 'click-delete')
+			KeyButton('Delete Debris', 'delete-debris')
 			UiTranslate(0, vspace)
-			ToolButton('Click Flame', 'click-fire')
+			KeyButton('Clear Fires', 'clear-fires')
 			UiTranslate(0, vspace + button_gap)
 			ToolButton('Click Explode', 'click-explode')
 			UiTranslate(0, tspace)
@@ -414,6 +464,22 @@ function drawInternalMenuItems()
 			end
 			UiTranslate(0, tspace)
 			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1)
+		UiPop()
+		UiPush()
+			UiTranslate(hspace * 2, 0)
+			ToolButton('Click Flame', 'click-fire')
+			UiTranslate(0, vspace)
+			ToolButton('Click Delete', 'click-delete')
+			UiTranslate(0, vspace)
+			UiTranslate(0, vspace)
+			UiTranslate(0, vspace + button_gap)
+			ToolButton('Click Cut', 'click-cutter')
+			UiTranslate(0, tspace)
+			FloatButton('Cutting Range', 'cutting-range', 0, 20, 0.5)
+			UiTranslate(0, vspace + button_gap)
+			KeyButton('Blast Away', 'blast-away')
+			UiTranslate(0, tspace)
+			FloatButton('Blast Radius', 'blast-radius', 0, 100, 5)
 		UiPop()
 	UiPop()
 end

@@ -77,25 +77,29 @@ modules = {
     makeModule('inf-ammo', 'Infinite Ammo', false, ''),
     makeModule('inf-timer', 'Freeze Alarm', false, ''),
     makeModule('unlock-tools', 'Unlock Tools', false, ''),
-    makeModule('flight', 'Flight', true, 'g'),
-    makeModule('freecam', 'Freecam', true, 'h'),
-    makeModule('player-boost', 'Player Boost', true, 'q'),
-    makeModule('player-boost-hor', 'Horizontal Player Boost', true, 'r'),
-    makeModule('player-boost-ver', 'Vertical Player Boost', true, 'q'),
+    makeModule('flight', 'Flight', true, 'Q'),
+    makeModule('freecam', 'Freecam', true, 'H'),
+    makeModule('player-boost', 'Player Boost', true, 'Q'),
+    makeModule('player-boost-hor', 'Horizontal Player Boost', true, 'R'),
+    makeModule('player-boost-ver', 'Vertical Player Boost', true, 'Q'),
     makeModule('player-boost-velocity', 'Player Speed', 'float', 0.4),
-    makeModule('vehicle-boost', 'Vehicle Boost', true, 'q'),
-    makeModule('vehicle-boost-hor', 'Horizontal Vehicle Boost', true, 'r'),
-    makeModule('vehicle-boost-ver', 'Vertical Vehicle Boost', true, 'q'),
+    makeModule('vehicle-boost', 'Vehicle Boost', true, 'Q'),
+    makeModule('vehicle-boost-hor', 'Horizontal Vehicle Boost', true, 'R'),
+    makeModule('vehicle-boost-ver', 'Vertical Vehicle Boost', true, 'Q'),
     makeModule('vehicle-boost-velocity', 'Vehicle Speed', 'float', 0.4),
     makeModule('click-fire', 'Click Fire', false, ''),
     makeModule('click-explode', 'Click Explode', false, ''),
     makeModule('explosion-power', 'Explosiveness', 'float', 0.5),
     makeModule('click-delete', 'Click Delete', false, ''),
     makeModule('click-cutter', 'Click Cut', false, ''),
+    makeModule('cutting-range', 'Cutting Range', 'float', 10),
     makeModule('override-gravity', 'Override Gravity', false, ''),
     makeModule('gravitation', 'Gravitation', 'float', -10),
     makeModule('extraboostbinds', 'Extra Boost Binds', false, ''),
-    makeModule('clear-fires', 'Clear Fires', true, 'o')
+    makeModule('clear-fires', 'Clear Fires', true, 'O'),
+    makeModule('blast-away', 'Blast Away', true, 'B'),
+    makeModule('blast-radius', 'Blast Radius', 'float', 10),
+    makeModule('delete-debris', 'Delete Debris', true, 'K')
 }
 
 function getkey(name)
@@ -149,6 +153,15 @@ function clamp(n, mi, ma)
 	if n < mi then n = mi end
 	if n > ma then n = ma end
 	return n
+end
+
+function ActionButton(text, bool)
+	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
+    UiColor(1, 1, 1, button_opacity)
+    if UiTextButton(text, button_width, button_height) then
+        UiSound(on_sound)
+        return true
+    end
 end
 
 function BoolButton(text, bool)
@@ -342,7 +355,11 @@ function KeyButton(text, bool)
         end
         if InputPressed('rmb') then
             if UiIsMouseInRect(modder_width, button_height) then
-                updateDebugMessage(text..' is currently bound to '..GetString(modid..bool..'.key'), '')
+                if GetString(modid..bool..'.key') == "" then
+                    updateDebugMessage(text..' is currently not bound to a key', '')
+                else
+                    updateDebugMessage(text..' is currently bound to '..GetString(modid..bool..'.key'), '')
+                end
             end
         end
     end
@@ -366,7 +383,11 @@ function KeybindSelector(text1, bind1, text2, bind2)
         end
         if InputPressed('rmb') then
             if UiIsMouseInRect(section_width, button_height) then
-                updateDebugMessage(text1..' is currently bound to '..GetString(modid..bind1..'.key'), '')
+                if GetString(modid..bind1..'.key') == "" then
+                    updateDebugMessage(text1..' is currently not bound to a key', '')
+                else
+                    updateDebugMessage(text1..' is currently bound to '..GetString(modid..bind1..'.key'), '')
+                end
             end
         end
     end
@@ -384,7 +405,11 @@ function KeybindSelector(text1, bind1, text2, bind2)
         end
         if InputPressed('rmb') then
             if UiIsMouseInRect(section_width, button_height) then
-                updateDebugMessage(text2..' is currently bound to '..GetString(modid..bind2..'.key'), '')
+                if GetString(modid..bind2..'.key') == "" then
+                    updateDebugMessage(text2..' is currently not bound to a key', '')
+                else
+                    updateDebugMessage(text2..' is currently bound to '..GetString(modid..bind2..'.key'), '')
+                end
             end
         end
     end
