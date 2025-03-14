@@ -390,10 +390,6 @@ end
 
 -- UI
 function draw()
-	if InputDown(GetString(modid..'menu-ingame.key')) or InputPressed(GetString(modid..'menu-ingame.key')) then	
-		InputClear()
-	end
-
 	-- Keybind Setting
 	if setting_bind then
 		checkKeyAtFrame()
@@ -419,13 +415,17 @@ function draw()
 		else
             UiSound(off_sound)
 		end
+		InputClear()
+	end
+
+	if InputDown(GetString(modid..'menu-ingame.key')) then	
+		InputClear()
 	end
 
 	-- Transitioner
 	if menuOpen then
 		if currentMenuOpacity < 1 then
 			SetValue("currentMenuOpacity", 1, "linear", 0.1)
-			InputClear()
 		end
 	else
 		if currentMenuOpacity > 0.01 then
