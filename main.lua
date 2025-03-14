@@ -11,7 +11,6 @@ currentDebugOpacity = 0
 currentDebugMessage = ''
 local needsToClose = false
 local menuOpen = false
-local button_gap = 10
 local flight = false
 local godmode_needs_off = false
 local freecam_needs_off = false
@@ -110,6 +109,10 @@ function tick(dt)
 			godmode_needs_off = true
 			SetPlayerParam('GodMode', false)
 		end
+	end
+
+	if menuOpen then
+		return
 	end
 
 	-- Clear Fires
@@ -237,10 +240,10 @@ function tick(dt)
 
 	
 	-- Clear Debris
-	if GetBool("savegame.mod.scmm.clear-debris") then
-		if InputDown(GetString("savegame.mod.scmm.clear-debris0")) then
+	if GetBool(modid..'delete-debris') then
+		if InputDown(GetString(modid..'delete-debris.key')) then
 			local maxMass = 100000
-			local maxBlowDist = GetFloat("savegame.mod.scmm.clear-debris-radius")
+			local maxBlowDist = GetFloat(modid..'delete-radius')
 			local t = GetCameraTransform()
 			local c = TransformToParentPoint(t, Vec(0, 0, -maxBlowDist/2))
 			local mi = VecAdd(c, Vec(-maxBlowDist/2, -maxBlowDist/2, -maxBlowDist/2))
@@ -385,107 +388,12 @@ function tick(dt)
 	end
 end
 
--- Externalized so that it can be framed more easily.
-function drawInternalMenuItems()
-	--DebugWatch('state', GetBool(modid..'ever_loaded'))
-	local vspace = button_gap + button_height
-	local tspace = button_gap / 2 + button_height
-	local hspace = button_gap + button_width
-	UiPush()
-		UiTranslate(24, 24)
-		UiFont('bold.ttf', 24)
-		UiPush()
-			UiFont('regular.ttf', 18)
-			UiTextShadow(0, 0, 0, 0.5 * math.min(currentMenuOpacity, debug_opacity), 1.0, 0.5)
-			UiAlign('right top')
-			UiTranslate(hspace * 2 + button_width, 0)
-			if debug_state == 'warn' then
-				UiColor(1, 0.7, 0.1, math.min(currentMenuOpacity, debug_opacity))
-			else
-				UiColor(1, 1, 1, math.min(currentMenuOpacity, debug_opacity))
-			end
-			UiText(debug_message)
-		UiPop()
-		UiText("SirCode's Mod Menu")
-		UiTranslate(0, 24)
-		UiFont('bold.ttf', 16)
-		UiText('Version '..version)
-		UiTranslate(0, 48)
-		UiPush()
-			-- Debug Use Only
-			-- UiTranslate(-0, -30)
-			-- if UiTextButton('Reset', 100, 100) then
-			-- 	SetBool(modid..'ever_loaded', false)
-			-- end
-			-- UiTranslate(0, 30)
-			-- Debug Use Only End
-			BoolButton('Godmode', 'inf-health')
-			UiTranslate(0, vspace)
-			BoolButton('Infinite Ammo', 'inf-ammo')
-			UiTranslate(0, vspace)
-			BoolButton('Disable Alarm', 'inf-timer')
-			UiTranslate(0, vspace)
-			BoolButton('Unlock Tools', 'unlock-tools')
-			UiTranslate(0, vspace + button_gap)
-			BoolButton('Override Gravity', 'override-gravity')
-			UiTranslate(0, tspace)
-			FloatButton('Gravitation', 'gravitation', -30, 30, 1)
-			UiTranslate(0, vspace + button_gap)
-			if GetBool(modid..'extraboostbinds') then
-				BoolButton('Player Boost', 'player-boost')
-				UiTranslate(0, tspace)
-				KeybindSelector('Horizontal', 'player-boost-hor', 'Vertical', 'player-boost-ver')
-			else
-				KeyButton('Player Boost', 'player-boost')
-			end
-			UiTranslate(0, tspace)
-			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1)
-		UiPop()
-		UiPush()
-			UiTranslate(hspace, 0)
-			KeyButton('Freecam', 'freecam')
-			UiTranslate(0, vspace)
-			KeyButton('Flight', 'flight')
-			UiTranslate(0, vspace)
-			KeyButton('Delete Debris', 'delete-debris')
-			UiTranslate(0, vspace)
-			KeyButton('Clear Fires', 'clear-fires')
-			UiTranslate(0, vspace + button_gap)
-			ToolButton('Click Explode', 'click-explode')
-			UiTranslate(0, tspace)
-			FloatButton('Explosiveness', 'explosion-power', 0.5, 4, 0.1)
-			UiTranslate(0, vspace + button_gap)
-			if GetBool(modid..'extraboostbinds') then
-				BoolButton('Vehicle Boost', 'vehicle-boost')
-				UiTranslate(0, tspace)
-				KeybindSelector('Horizontal', 'vehicle-boost-hor', 'Vertical', 'vehicle-boost-ver')
-			else
-				KeyButton('Vehicle Boost', 'vehicle-boost')
-			end
-			UiTranslate(0, tspace)
-			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1)
-		UiPop()
-		UiPush()
-			UiTranslate(hspace * 2, 0)
-			ToolButton('Click Flame', 'click-fire')
-			UiTranslate(0, vspace)
-			ToolButton('Click Delete', 'click-delete')
-			UiTranslate(0, vspace)
-			UiTranslate(0, vspace)
-			UiTranslate(0, vspace + button_gap)
-			ToolButton('Click Cut', 'click-cutter')
-			UiTranslate(0, tspace)
-			FloatButton('Cutting Range', 'cutting-range', 0, 20, 0.5)
-			UiTranslate(0, vspace + button_gap)
-			KeyButton('Blast Away', 'blast-away')
-			UiTranslate(0, tspace)
-			FloatButton('Blast Radius', 'blast-radius', 0, 100, 5)
-		UiPop()
-	UiPop()
-end
-
 -- UI
 function draw()
+	if InputDown(GetString(modid..'menu-ingame.key')) or InputPressed(GetString(modid..'menu-ingame.key')) then	
+		InputClear()
+	end
+
 	-- Keybind Setting
 	if setting_bind then
 		checkKeyAtFrame()
@@ -517,6 +425,7 @@ function draw()
 	if menuOpen then
 		if currentMenuOpacity < 1 then
 			SetValue("currentMenuOpacity", 1, "linear", 0.1)
+			InputClear()
 		end
 	else
 		if currentMenuOpacity > 0.01 then
@@ -570,11 +479,11 @@ function draw()
 		if hasframed == 0 then
 			UiWindow(0, 0, true)
 			UiBeginFrame()
-				drawInternalMenuItems()
+			drawMenuItems(currentMenuOpacity)
 			frameWidth, frameHeight = UiEndFrame()
 			hasframed = 1
 		else
-			drawInternalMenuItems()
+			drawMenuItems(currentMenuOpacity)
 		end
 		UiPop()
 	end

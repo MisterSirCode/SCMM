@@ -1,5 +1,5 @@
 -- This will automatically append the mod's ID after savegame.mod
-version = 12.1
+version = 12.2
 modid = 'savegame.mod.'
 tempid = 'level.sircodesmenu.'
 modules = {}
@@ -16,7 +16,9 @@ debug_message = ''
 button_width = 250
 modder_width = 50
 button_height = 40
-button_gap = 5
+button_hgap = 5
+button_vgap = 10
+button_bump = button_vgap / 4
 setting_bind = false
 setting_display = ''
 disable_tools = false
@@ -99,7 +101,8 @@ modules = {
     makeModule('clear-fires', 'Clear Fires', true, 'O'),
     makeModule('blast-away', 'Blast Away', true, 'B'),
     makeModule('blast-radius', 'Blast Radius', 'float', 10),
-    makeModule('delete-debris', 'Delete Debris', true, 'K')
+    makeModule('delete-debris', 'Delete Debris', true, 'K'),
+    makeModule('delete-radius', 'Delete Radius', 'float', 10),
 }
 
 function getkey(name)
@@ -155,32 +158,48 @@ function clamp(n, mi, ma)
 	return n
 end
 
-function ActionButton(text, bool)
+function ActionButton(text, bool, bump)
+    if bump then 
+        bheight = button_height + button_bump
+    else 
+        bheight = button_height 
+    end
 	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
     UiColor(1, 1, 1, button_opacity)
-    if UiTextButton(text, button_width, button_height) then
+    if UiTextButton(text, button_width, bheight) then
         UiSound(on_sound)
         return true
     end
+    if bump then
+        UiTranslate(0, button_bump)
+    end
 end
 
-function BoolButton(text, bool)
+function BoolButton(text, bool, bump)
+    if bump then 
+        bheight = button_height + button_bump
+    else 
+        bheight = button_height 
+    end
 	UiButtonImageBox(lightbox, 6, 6, 1, 1, 1, button_opacity)
 	if GetBool(modid..bool) then
         UiColor(0.3, 1, 0.1, button_opacity)
-		if UiTextButton(text..' - On', button_width, button_height) then
+		if UiTextButton(text..' - On', button_width, bheight) then
 			SetBool(modid..bool, false)
 			UiSound(off_sound)
             return true
 		end
 	else
 		UiColor(1, 0.3, 0.1, button_opacity)
-		if UiTextButton(text..' - Off', button_width, button_height) then
+		if UiTextButton(text..' - Off', button_width, bheight) then
 			SetBool(modid..bool, true)
 			UiSound(on_sound)
             return true
 		end
 	end
+    if bump then
+        UiTranslate(0, button_bump)
+    end
 end
 
 function ShiftInt(int, min, max, iter)
@@ -213,7 +232,12 @@ function ShiftFloat(float, min, max, iter)
     end
 end
 
-function IncDecButton(text, type, value, min, max, iter)
+function IncDecButton(text, type, value, min, max, iter, bump)
+    if bump then 
+        bheight = button_height + button_bump
+    else 
+        bheight = button_height 
+    end
     if InputDown('shift') then
         iter = iter * 2
     end
@@ -226,7 +250,7 @@ function IncDecButton(text, type, value, min, max, iter)
         UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
         UiFont('bold.ttf', 24)
         UiColor(1, 0.3, 0.1, button_opacity)
-        if UiTextButton('-', modder_width, button_height) then
+        if UiTextButton('-', modder_width, bheight) then
             if type == 'int' then
                 ShiftInt(modid..value, min, max, -iter)
             else
@@ -236,8 +260,8 @@ function IncDecButton(text, type, value, min, max, iter)
         end
     UiPop()
     -- Draw the Middle box
-    local middle_width = button_width - (2 * modder_width) - (2 * button_gap)
-    UiTranslate(button_gap + modder_width)
+    local middle_width = button_width - (2 * modder_width) - (2 * button_hgap)
+    UiTranslate(button_hgap + modder_width)
 	UiButtonImageBox(lightbox_m, 6, 6, 1, 1, 1, button_opacity)
     UiColor(1, 1, 1, button_opacity)
     local valText
@@ -246,16 +270,16 @@ function IncDecButton(text, type, value, min, max, iter)
     else
         valText = srnd(GetFloat(modid..value))
     end
-    if UiTextButton(text..': '..valText, middle_width, button_height) then
+    if UiTextButton(text..': '..valText, middle_width, bheight) then
         resetToDefault(value)
     end
     -- Draw the Increase button
-    UiTranslate(button_gap + middle_width)
+    UiTranslate(button_hgap + middle_width)
     UiPush()
         UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
         UiFont('bold.ttf', 24)
         UiColor(0.3, 1, 0.1, button_opacity)
-        if UiTextButton('+', modder_width, button_height) then
+        if UiTextButton('+', modder_width, bheight) then
             if type == 'int' then
                 ShiftInt(modid..value, min, max, iter)
             else
@@ -265,47 +289,58 @@ function IncDecButton(text, type, value, min, max, iter)
         end
     UiPop()
     UiPop()
+    if bump then
+        UiTranslate(0, button_bump)
+    end
 end
 
-function IntButton(text, int, min, max, iter)
-    IncDecButton(text, 'int', int, min, max, iter)
+function IntButton(text, int, min, max, iter, bump)
+    IncDecButton(text, 'int', int, min, max, iter, bump)
 end
 
-function FloatButton(text, float, min, max, iter)
-    IncDecButton(text, 'float', float, min, max, iter)
+function FloatButton(text, float, min, max, iter, bump)
+    IncDecButton(text, 'float', float, min, max, iter, bump)
 end
 
 -- Tool Setter Button
-function ToolButton(text, bool)
+function ToolButton(text, bool, bump)
+    if bump then 
+        bheight = button_height + button_bump
+    else 
+        bheight = button_height 
+    end
     UiPush()
-    local left_width = button_width - button_gap - modder_width
+    local left_width = button_width - button_hgap - modder_width
 	UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
 	if GetBool(modid..bool) then
         UiColor(0.3, 1, 0.1, button_opacity)
-		if UiTextButton(text..' - On', left_width, button_height) then
+		if UiTextButton(text..' - On', left_width, bheight) then
 			SetBool(modid..bool, false)
 			UiSound(off_sound)
 		end
 	else
 		UiColor(1, 0.3, 0.1, button_opacity)
-		if UiTextButton(text..' - Off', left_width, button_height) then
+		if UiTextButton(text..' - Off', left_width, bheight) then
 			SetBool(modid..bool, true)
 			UiSound(on_sound)
 		end
 	end
-    UiTranslate(left_width + button_gap)
+    UiTranslate(left_width + button_hgap)
 	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
     if disable_tools then
         UiColor(0.4, 0.1, 0.0, 1.0)
     else
         UiColor(0.1, 0.5, 1.0, button_opacity)
     end
-    if UiTextButton('Tool', modder_width, button_height) and not disable_tools then
+    if UiTextButton('Tool', modder_width, bheight) and not disable_tools then
         SetString(modid..bool..'.tool', GetString('game.player.tool'))
         updateDebugMessage(text..' tool updated to '..GetString('game.player.tool'), '')
         UiSound(on_sound)
     end
     UiPop()
+    if bump then
+        UiTranslate(0, button_bump)
+    end
 end
 
 -- Keybind Setter
@@ -323,38 +358,43 @@ function checkKeyAtFrame()
 end
 
 -- Keybind Setter Button
-function KeyButton(text, bool)
+function KeyButton(text, bool, bump)
+    if bump then 
+        bheight = button_height + button_bump
+    else 
+        bheight = button_height 
+    end
     UiPush()
-    local left_width = button_width - button_gap - modder_width
+    local left_width = button_width - button_hgap - modder_width
 	UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
 	if GetBool(modid..bool) then
         UiColor(0.3, 1, 0.1, button_opacity)
-		if UiTextButton(text..' - On', left_width, button_height) then
+		if UiTextButton(text..' - On', left_width, bheight) then
 			SetBool(modid..bool, false)
 			UiSound(off_sound)
 		end
 	else
 		UiColor(1, 0.3, 0.1, button_opacity)
-		if UiTextButton(text..' - Off', left_width, button_height) then
+		if UiTextButton(text..' - Off', left_width, bheight) then
 			SetBool(modid..bool, true)
 			UiSound(on_sound)
 		end
 	end
-    UiTranslate(left_width + button_gap)
+    UiTranslate(left_width + button_hgap)
 	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
     UiColor(1, 1, 0.1, button_opacity)
     if setting_bind == bool then
-        if UiTextButton('...', modder_width, button_height) then
+        if UiTextButton('...', modder_width, bheight) then
             UiSound(off_sound)
         end
     else
-        if UiTextButton('Key', modder_width, button_height) then
+        if UiTextButton('Key', modder_width, bheight) then
             setting_bind = bool
             setting_display = text
             UiSound(on_sound)
         end
         if InputPressed('rmb') then
-            if UiIsMouseInRect(modder_width, button_height) then
+            if UiIsMouseInRect(modder_width, bheight) then
                 if GetString(modid..bool..'.key') == "" then
                     updateDebugMessage(text..' is currently not bound to a key', '')
                 else
@@ -364,25 +404,33 @@ function KeyButton(text, bool)
         end
     end
     UiPop()
+    if bump then
+        UiTranslate(0, button_bump)
+    end
 end
 
-function KeybindSelector(text1, bind1, text2, bind2)
+function KeybindSelector(text1, bind1, text2, bind2, bump)
+    if bump then 
+        bheight = button_height + button_bump
+    else 
+        bheight = button_height 
+    end
     UiPush()
-    local section_width = button_width / 2 - button_gap / 2
+    local section_width = button_width / 2 - button_hgap / 2
     UiColor(1, 1, 0.1, button_opacity)
 	UiButtonImageBox(lightbox_l, 6, 6, 1, 1, 1, button_opacity)
     if setting_bind == bind1 then
-        if UiTextButton('...', section_width, button_height) then
+        if UiTextButton('...', section_width, bheight) then
             UiSound(off_sound)
         end
     else
-        if UiTextButton(text1..' Key', section_width, button_height) then
+        if UiTextButton(text1..' Key', section_width, bheight) then
             setting_bind = bind1
             setting_display = text1
             UiSound(on_sound)
         end
         if InputPressed('rmb') then
-            if UiIsMouseInRect(section_width, button_height) then
+            if UiIsMouseInRect(section_width, bheight) then
                 if GetString(modid..bind1..'.key') == "" then
                     updateDebugMessage(text1..' is currently not bound to a key', '')
                 else
@@ -391,20 +439,20 @@ function KeybindSelector(text1, bind1, text2, bind2)
             end
         end
     end
-    UiTranslate(section_width + button_gap)
+    UiTranslate(section_width + button_hgap)
 	UiButtonImageBox(lightbox_r, 6, 6, 1, 1, 1, button_opacity)
     if setting_bind == bind2 then
-        if UiTextButton('...', section_width, button_height) then
+        if UiTextButton('...', section_width, bheight) then
             UiSound(off_sound)
         end
     else
-        if UiTextButton(text2..' Key', section_width, button_height) then
+        if UiTextButton(text2..' Key', section_width, bheight) then
             setting_bind = bind2
             setting_display = text2
             UiSound(on_sound)
         end
         if InputPressed('rmb') then
-            if UiIsMouseInRect(section_width, button_height) then
+            if UiIsMouseInRect(section_width, bheight) then
                 if GetString(modid..bind2..'.key') == "" then
                     updateDebugMessage(text2..' is currently not bound to a key', '')
                 else
@@ -414,4 +462,105 @@ function KeybindSelector(text1, bind1, text2, bind2)
         end
     end
     UiPop()
+    if bump then
+        UiTranslate(0, button_bump)
+    end
+end
+
+function drawMenuItems(currentMenuOpacity)
+	local vspace = button_vgap + button_height
+	local tspace = button_vgap / 2 + button_height
+	local hspace = button_vgap + button_width
+	UiPush()
+		UiTranslate(24, 24)
+		UiFont('bold.ttf', 24)
+		UiPush()
+			UiFont('regular.ttf', 18)
+			UiTextShadow(0, 0, 0, 0.5 * math.min(currentMenuOpacity, debug_opacity), 1.0, 0.5)
+			UiAlign('right top')
+			UiTranslate(hspace * 2 + button_width, 0)
+			if debug_state == 'warn' then
+				UiColor(1, 0.7, 0.1, math.min(currentMenuOpacity, debug_opacity))
+			else
+				UiColor(1, 1, 1, math.min(currentMenuOpacity, debug_opacity))
+			end
+			UiText(debug_message)
+		UiPop()
+		UiText("SirCode's Mod Menu")
+		UiTranslate(0, 24)
+		UiFont('bold.ttf', 16)
+		UiText('Version '..version)
+		UiTranslate(0, 48)
+		UiPush()
+			-- Debug Use Only
+			-- UiTranslate(-0, -30)
+			-- if UiTextButton('Reset', 100, 100) then
+			-- 	SetBool(modid..'ever_loaded', false)
+			-- end
+			-- UiTranslate(0, 30)
+			-- Debug Use Only End
+			BoolButton('Godmode', 'inf-health')
+			UiTranslate(0, vspace)
+			BoolButton('Infinite Ammo', 'inf-ammo')
+			UiTranslate(0, vspace)
+			BoolButton('Disable Alarm', 'inf-timer')
+			UiTranslate(0, vspace)
+			BoolButton('Unlock Tools', 'unlock-tools')
+			UiTranslate(0, vspace)
+			BoolButton('Override Gravity', 'override-gravity', true)
+			UiTranslate(0, tspace)
+			FloatButton('Gravitation', 'gravitation', -30, 30, 1, true)
+			UiTranslate(0, vspace)
+			if GetBool(modid..'extraboostbinds') then
+				BoolButton('Player Boost', 'player-boost', true)
+				UiTranslate(0, tspace)
+				KeybindSelector('Horizontal', 'player-boost-hor', 'Vertical', 'player-boost-ver', true)
+			else
+				KeyButton('Player Boost', 'player-boost', true)
+			end
+			UiTranslate(0, tspace)
+			FloatButton('Velocity', 'player-boost-velocity', 0, 10, 0.1, true)
+		UiPop()
+		UiPush()
+			UiTranslate(hspace, 0)
+			KeyButton('Freecam', 'freecam')
+			UiTranslate(0, vspace)
+			KeyButton('Flight', 'flight')
+			UiTranslate(0, vspace)
+			KeyButton('Delete Debris', 'delete-debris', true)
+			UiTranslate(0, tspace)
+			FloatButton('Delete Radius', 'delete-radius', 0, 100, 5, true)
+			UiTranslate(0, vspace)
+			KeyButton('Blast Away', 'blast-away', true)
+			UiTranslate(0, tspace)
+			FloatButton('Blast Radius', 'blast-radius', 0, 100, 5, true)
+			UiTranslate(0, vspace)
+			if GetBool(modid..'extraboostbinds') then
+				BoolButton('Vehicle Boost', 'vehicle-boost', true)
+				UiTranslate(0, tspace)
+				KeybindSelector('Horizontal', 'vehicle-boost-hor', 'Vertical', 'vehicle-boost-ver', true)
+			else
+				KeyButton('Vehicle Boost', 'vehicle-boost', true)
+			end
+			UiTranslate(0, tspace)
+			FloatButton('Velocity', 'vehicle-boost-velocity', 0, 10, 0.1, true)
+		UiPop()
+		UiPush()
+			UiTranslate(hspace * 2, 0)
+			KeyButton('Clear Fires', 'clear-fires')
+			UiTranslate(0, vspace)
+			ToolButton('Click Delete', 'click-delete')
+			UiTranslate(0, vspace)
+			ToolButton('Click Flame', 'click-fire')
+			UiTranslate(0, vspace)
+			UiTranslate(0, vspace)
+			ToolButton('Click Cut', 'click-cutter', true)
+			UiTranslate(0, tspace)
+			FloatButton('Cutting Range', 'cutting-range', 0, 20, 0.5, true)
+			UiTranslate(0, vspace)
+			ToolButton('Click Explode', 'click-explode', true)
+			UiTranslate(0, tspace)
+			FloatButton('Explosiveness', 'explosion-power', 0.5, 4, 0.1, true)
+		UiPop()
+	UiPop()
 end
